@@ -6,6 +6,7 @@ import { adminAllocationsRouter } from './admin/allocations.js';
 import { adminServersRouter } from './admin/servers.js';
 import { adminUsersRouter } from './admin/users.js';
 import { adminModulesRouter } from './admin/modules.js';
+import { adminSystemRouter } from './admin/system.js';
 import { clientServersRouter } from './client/servers.js';
 import { clientPowerRouter } from './client/power.js';
 import { clientFilesRouter } from './client/files.js';
@@ -35,6 +36,7 @@ apiRouter.route('/admin/allocations', adminAllocationsRouter);
 apiRouter.route('/admin/servers', adminServersRouter);
 apiRouter.route('/admin/users', adminUsersRouter);
 apiRouter.route('/admin/modules', adminModulesRouter);
+apiRouter.route('/admin/system', adminSystemRouter);
 
 // Client Routes
 apiRouter.route('/client/servers', clientServersRouter);

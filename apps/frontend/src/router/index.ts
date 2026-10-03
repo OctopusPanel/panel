@@ -70,6 +70,11 @@ const routes: RouteRecordRaw[] = [
         name: 'admin-modules',
         component: () => import('../views/admin/AdminModulesView.vue'),
       },
+      {
+        path: 'system',
+        name: 'admin-system',
+        component: () => import('../views/admin/AdminSystemView.vue'),
+      },
     ],
   },
 

@@ -11,6 +11,7 @@ import {
   Layers,
   Users,
   Boxes,
+  RefreshCw,
   ArrowLeft,
   LogOut,
 } from 'lucide-vue-next';
@@ -96,6 +97,15 @@ function handleLogout() {
         >
           <Boxes class="w-3.5 h-3.5 mr-2.5 shrink-0" />
           {{ t('nav.modules') }}
+        </router-link>
+
+        <router-link
+          to="/admin/system"
+          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+          active-class="bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30"
+        >
+          <RefreshCw class="w-3.5 h-3.5 mr-2.5 shrink-0" />
+          {{ t('nav.system') }}
         </router-link>
 
         <!-- Dynamic Module Slot for Admin Navigation -->

@@ -164,6 +164,7 @@ export const demoNodes = [
     dockerVersion: 'Docker Engine v26.1.4',
     cgroupsV2: true,
     daemonStatus: 'online',
+    daemonVersion: 'v0.1.0',
     loadAvg: [0.42, 0.58, 0.65],
   },
   {
@@ -188,6 +189,7 @@ export const demoNodes = [
     dockerVersion: 'Docker Engine v26.0.2',
     cgroupsV2: true,
     daemonStatus: 'online',
+    daemonVersion: 'v0.1.0',
     loadAvg: [0.18, 0.24, 0.31],
   },
   {
@@ -212,6 +214,7 @@ export const demoNodes = [
     dockerVersion: 'Docker Engine v25.0.5',
     cgroupsV2: true,
     daemonStatus: 'online',
+    daemonVersion: 'v0.2.0',
     loadAvg: [1.12, 1.05, 0.98],
   },
 ];
@@ -909,3 +912,58 @@ world-settings:
         hard: 128
 `,
 };
+
+export interface DemoSystemUpdateInfo {
+  currentVersion: string;
+  latestVersion: string;
+  hasUpdate: boolean;
+  releaseName: string;
+  releaseNotes: string;
+  publishedAt: string;
+  downloadUrl: string;
+}
+
+export const demoSystemUpdates: DemoSystemUpdateInfo = {
+  currentVersion: '0.1.0',
+  latestVersion: '0.2.0',
+  hasUpdate: true,
+  releaseName: 'OctopusPanel v0.2.0 - Centralized Fleet Update & DB Snapshot Orchestration',
+  releaseNotes: `### 🐙 Highlights in v0.2.0
+- **1-Click Remote Node Fleet Updates:** Zero-downtime updates across all Tentacle host nodes. Game containers stay online without interruption!
+- **Automated Database Snapshots:** Pre-migration gzip dumps with automatic rollback guard if migrations fail.
+- **Live Terminal Log Streaming:** Real-time visual progress bar and streaming logs during updates.
+- **Database Snapshot Cockpit:** Full manual trigger, direct download of .sql.gz dumps, and one-click restore.`,
+  publishedAt: '2026-10-04T00:00:00Z',
+  downloadUrl: 'https://github.com/OctopusPanel/panel/releases/tag/v0.2.0',
+};
+
+export interface DemoDatabaseSnapshot {
+  id: string;
+  filename: string;
+  sizeBytes: number;
+  sizeFormatted: string;
+  createdAt: string;
+  type: 'pre-migration' | 'manual' | 'scheduled';
+  version: string;
+}
+
+export const demoDatabaseSnapshots: DemoDatabaseSnapshot[] = [
+  {
+    id: 'pre-migration-backup-v0.1.0-1728000000000.sql.gz',
+    filename: 'pre-migration-backup-v0.1.0-1728000000000.sql.gz',
+    sizeBytes: 2457600,
+    sizeFormatted: '2.34 MB',
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+    type: 'pre-migration',
+    version: '0.1.0',
+  },
+  {
+    id: 'manual-backup-v0.1.0-1728086400000.sql.gz',
+    filename: 'manual-backup-v0.1.0-1728086400000.sql.gz',
+    sizeBytes: 2516582,
+    sizeFormatted: '2.40 MB',
+    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+    type: 'manual',
+    version: '0.1.0',
+  },
+];

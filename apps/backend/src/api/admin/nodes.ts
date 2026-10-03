@@ -196,3 +196,45 @@ adminNodesRouter.delete('/:id', async (c) => {
     data: { message: 'Node deleted successfully' },
   });
 });
+
+// POST /api/v1/admin/nodes/:id/update
+adminNodesRouter.post('/:id/update', async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  const node = await db.query.nodes.findFirst({
+    where: eq(nodes.id, id),
+  });
+
+  if (!node) {
+    return jsonError(c, ApiErrorCode.NODE_NOT_FOUND, 404, { id });
+  }
+
+  const body = await c.req.json().catch(() => ({}));
+  const targetVersion = (body.targetVersion as string) || 'v0.2.0';
+  const sha256 = (body.sha256 as string) || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  const downloadUrl =
+    (body.downloadUrl as string) ||
+    `https://github.com/OctopusPanel/tentacle/releases/download/${targetVersion}/tentacle-linux-x86_64.tar.gz`;
+
+  try {
+    const client = await getTentacleClientForNode(id);
+    const result = await client.updateDaemon({
+      targetVersion,
+      sha256,
+      downloadUrl,
+    });
+
+    return c.json({
+      success: true,
+      data: result,
+      message: `Node update initiated: ${result.message}`,
+    });
+  } catch (err: any) {
+    return c.json(
+      {
+        success: false,
+        error: `Failed to trigger update on node: ${err?.message || err}`,
+      },
+      502
+    );
+  }
+});
