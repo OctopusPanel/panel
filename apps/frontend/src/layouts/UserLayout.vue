@@ -20,6 +20,7 @@ import {
   Database,
   Clock,
   Users,
+  ArrowLeft,
 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -66,57 +67,70 @@ function handleLogout() {
 </script>
 
 <template>
-  <div class="min-h-screen flex bg-[#0b0f17] text-slate-100">
+  <div class="h-screen flex bg-[#0b0f17] text-slate-100 overflow-hidden">
     <!-- Sidebar -->
-    <aside class="w-64 bg-[#111622] border-r border-slate-800/80 flex flex-col shrink-0">
+    <aside class="w-64 bg-[#111622] border-r border-slate-800/80 flex flex-col shrink-0 h-full overflow-hidden">
       <!-- Logo -->
-      <div class="h-16 flex items-center px-6 border-b border-slate-800/80">
+      <div class="h-14 flex items-center px-5 border-b border-slate-800/80 shrink-0">
         <span class="text-2xl mr-2.5">🐙</span>
         <div>
-          <h1 class="text-sm font-bold tracking-tight text-white">OctopusPanel</h1>
-          <p class="text-[10px] text-blue-400 font-medium">CLOUD &amp; GAME MANAGEMENT</p>
+          <h1 class="text-sm font-bold tracking-tight text-white leading-tight">OctopusPanel</h1>
+          <p class="text-[9px] text-blue-400 font-semibold tracking-wider">CLOUD &amp; GAME MANAGEMENT</p>
         </div>
       </div>
 
       <!-- Navigation -->
-      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <router-link
-          to="/"
-          class="flex items-center px-3 py-2 text-xs font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
-          :class="{ 'bg-blue-600/10 text-blue-400 font-semibold border border-blue-500/20': !isServerSelected && route.path === '/' }"
-        >
-          <LayoutDashboard class="w-4 h-4 mr-3" />
-          {{ t('nav.dashboard') }}
-        </router-link>
+      <nav class="flex-1 px-2.5 py-2 space-y-0.5 overflow-y-auto">
+        <!-- Standalone Dashboard / Server links when no server selected -->
+        <template v-if="!isServerSelected">
+          <router-link
+            to="/"
+            class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+            :class="{ 'bg-blue-600/10 text-blue-400 font-semibold border border-blue-500/20': route.path === '/' }"
+          >
+            <LayoutDashboard class="w-4 h-4 mr-2.5" />
+            {{ t('nav.dashboard') }}
+          </router-link>
 
-        <router-link
-          to="/"
-          class="flex items-center px-3 py-2 text-xs font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
-        >
-          <Server class="w-4 h-4 mr-3" />
-          {{ t('nav.servers') }}
-        </router-link>
+          <router-link
+            to="/"
+            class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+          >
+            <Server class="w-4 h-4 mr-2.5" />
+            {{ t('nav.servers') }}
+          </router-link>
 
-        <!-- Selected Server Cockpit Navigation -->
-        <div v-if="isServerSelected" class="pt-3 mt-2 border-t border-slate-800/80 space-y-1">
-          <!-- Server Header in Sidebar -->
-          <div class="px-2.5 py-2 rounded-lg bg-[#0b0f17] border border-slate-800/80 mb-2">
-            <div class="flex items-center justify-between text-[10px] mb-1">
-              <span class="font-mono font-bold text-slate-400">
+          <!-- Dynamic Module Slot for User Navigation -->
+          <div class="pt-1.5">
+            <ModuleSlot slot-name="sidebar:user:nav" />
+          </div>
+        </template>
+
+        <!-- Selected Server Cockpit Navigation (Compact Layout) -->
+        <template v-else>
+          <!-- Back to Servers -->
+          <router-link
+            to="/"
+            class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors mb-1.5 group"
+          >
+            <ArrowLeft class="w-3.5 h-3.5 mr-2 text-slate-500 group-hover:text-slate-300 transition-colors" />
+            <span>{{ t('nav.servers') || 'All Servers' }}</span>
+          </router-link>
+
+          <!-- Compact Server Header Card -->
+          <div class="px-2.5 py-1.5 rounded-lg bg-[#0b0f17] border border-slate-800/80 mb-2 flex items-center justify-between">
+            <div class="truncate mr-2 min-w-0">
+              <p class="text-xs font-bold text-white truncate leading-tight">
+                {{ serverStore.currentServer?.name || 'Server Cockpit' }}
+              </p>
+              <span class="text-[10px] font-mono text-slate-400">
                 #{{ serverStore.currentServer?.identifier || currentServerId.slice(0, 8) }}
               </span>
-              <span
-                class="w-2 h-2 rounded-full"
-                :class="serverStore.currentServer?.status === 'running' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'"
-              ></span>
             </div>
-            <p class="text-xs font-bold text-white truncate">
-              {{ serverStore.currentServer?.name || 'Loading Server...' }}
-            </p>
-          </div>
-
-          <div class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-            Server Controls
+            <span
+              class="w-2 h-2 rounded-full shrink-0"
+              :class="serverStore.currentServer?.status === 'running' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'"
+            ></span>
           </div>
 
           <!-- 9 Cockpit Tabs -->
@@ -124,59 +138,54 @@ function handleLogout() {
             v-for="tab in serverTabs"
             :key="tab.id"
             :to="{ path: `/server/${currentServerId}`, query: { tab: tab.id } }"
-            class="flex items-center px-3 py-2 text-xs rounded-lg transition-colors group"
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group"
             :class="isTabActive(tab.id)
               ? 'bg-blue-600/15 text-blue-400 font-semibold border border-blue-500/30 shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'"
           >
             <component
               :is="tab.icon"
-              class="w-4 h-4 mr-3 shrink-0"
+              class="w-3.5 h-3.5 mr-2.5 shrink-0"
               :class="isTabActive(tab.id) ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'"
             />
             <span class="truncate">{{ tab.label }}</span>
           </router-link>
 
           <!-- Dynamic Module Slot for Server Plugins -->
-          <div class="pt-1">
+          <div class="pt-0.5">
             <ModuleSlot slot-name="server:tabs" :context="{ serverUuid: currentServerId }" />
           </div>
-        </div>
-
-        <!-- Dynamic Module Slot for User Navigation -->
-        <div v-if="!isServerSelected" class="pt-2">
-          <ModuleSlot slot-name="sidebar:user:nav" />
-        </div>
+        </template>
       </nav>
 
       <!-- Admin link if user is admin -->
-      <div v-if="authStore.isAdmin" class="p-3 border-t border-slate-800/80">
+      <div v-if="authStore.isAdmin" class="p-2 border-t border-slate-800/80 shrink-0">
         <router-link
           to="/admin/nodes"
-          class="flex items-center px-3 py-2 text-xs font-medium rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
         >
-          <ShieldAlert class="w-4 h-4 mr-2.5" />
+          <ShieldAlert class="w-3.5 h-3.5 mr-2 shrink-0" />
           {{ t('nav.adminArea') }}
         </router-link>
       </div>
 
       <!-- User footer -->
-      <div class="p-3.5 border-t border-slate-800/80 flex items-center justify-between bg-[#0e121b]">
-        <div class="flex items-center space-x-2.5 overflow-hidden">
-          <div class="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">
+      <div class="p-2.5 border-t border-slate-800/80 flex items-center justify-between bg-[#0e121b] shrink-0">
+        <div class="flex items-center space-x-2 overflow-hidden min-w-0">
+          <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center font-bold text-[10px] text-white uppercase shrink-0">
             {{ authStore.user?.username?.[0] || 'U' }}
           </div>
-          <div class="truncate text-xs">
-            <p class="font-medium text-slate-200 truncate">{{ authStore.user?.username }}</p>
-            <p class="text-[10px] text-slate-400 truncate">{{ authStore.user?.email }}</p>
+          <div class="truncate text-xs min-w-0">
+            <p class="font-medium text-slate-200 truncate leading-tight">{{ authStore.user?.username }}</p>
+            <p class="text-[10px] text-slate-400 truncate leading-tight">{{ authStore.user?.email }}</p>
           </div>
         </div>
         <button
           @click="handleLogout"
-          class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors"
+          class="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors shrink-0"
           :title="t('nav.logout')"
         >
-          <LogOut class="w-4 h-4" />
+          <LogOut class="w-3.5 h-3.5" />
         </button>
       </div>
     </aside>
@@ -184,7 +193,7 @@ function handleLogout() {
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Top Navbar -->
-      <header class="h-16 bg-[#111622]/60 backdrop-blur-sm border-b border-slate-800/80 px-6 flex items-center justify-between">
+      <header class="h-14 bg-[#111622]/60 backdrop-blur-sm border-b border-slate-800/80 px-6 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <h2 class="text-sm font-semibold text-slate-200">{{ t('nav.clientArea') }}</h2>
           <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">

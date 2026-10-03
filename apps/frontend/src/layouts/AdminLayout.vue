@@ -26,11 +26,11 @@ function handleLogout() {
 </script>
 
 <template>
-  <div class="min-h-screen flex bg-[#0b0f17] text-slate-100">
+  <div class="h-screen flex bg-[#0b0f17] text-slate-100 overflow-hidden">
     <!-- Admin Sidebar -->
-    <aside class="w-64 bg-[#0e121d] border-r border-slate-800/80 flex flex-col shrink-0">
+    <aside class="w-64 bg-[#0e121d] border-r border-slate-800/80 flex flex-col shrink-0 h-full overflow-hidden">
       <!-- Logo -->
-      <div class="h-16 flex items-center px-6 border-b border-slate-800/80">
+      <div class="h-14 flex items-center px-6 border-b border-slate-800/80 shrink-0">
         <span class="text-2xl mr-2.5">🛡️</span>
         <div>
           <h1 class="text-sm font-bold tracking-tight text-white">OctopusPanel</h1>
@@ -135,7 +135,7 @@ function handleLogout() {
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Top Navbar -->
-      <header class="h-16 bg-[#0e121d]/70 backdrop-blur-sm border-b border-slate-800/80 px-6 flex items-center justify-between">
+      <header class="h-14 bg-[#0e121d]/70 backdrop-blur-sm border-b border-slate-800/80 px-6 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <h2 class="text-sm font-semibold text-slate-200">{{ t('nav.adminArea') }}</h2>
           <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
