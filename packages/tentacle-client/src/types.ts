@@ -59,3 +59,15 @@ export interface TentacleWsMessage {
   event: TentacleWsEventType;
   args?: unknown[];
 }
+
+export interface TentacleUpdatePayload {
+  targetVersion: string;
+  sha256: string;
+  downloadUrl: string;
+}
+
+export interface TentacleUpdateResult {
+  success: boolean;
+  message: string;
+  target_version: string;
+}

@@ -5,6 +5,8 @@ import {
   TentacleServerCreateOptions,
   TentacleServerInfo,
   TentacleFileEntry,
+  TentacleUpdatePayload,
+  TentacleUpdateResult,
 } from './types.js';
 import { PowerAction, ServerMetrics } from '@octopus/shared';
 
@@ -161,6 +163,13 @@ export class TentacleHttpClient {
     await this.request(`/api/servers/${uuid}/files/decompress`, {
       method: 'POST',
       body: JSON.stringify({ root, file }),
+    });
+  }
+
+  async updateDaemon(payload: TentacleUpdatePayload): Promise<TentacleUpdateResult> {
+    return this.request('/api/system/update', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
   }
 }
