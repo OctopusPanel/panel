@@ -692,8 +692,13 @@ provision_local_postgres() {
     $psql_cmd -c "GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};"
     $psql_cmd -c "ALTER DATABASE ${db_name} OWNER TO ${db_user};"
 
+    # PostgreSQL 15+ revokes CREATE on schema public by default; explicitly grant to db_user
+    $psql_cmd -d "${db_name}" -c "GRANT ALL ON SCHEMA public TO ${db_user};" 2>/dev/null || true
+    $psql_cmd -d "${db_name}" -c "ALTER SCHEMA public OWNER TO ${db_user};" 2>/dev/null || true
+
     # Construct connection string
     DATABASE_URL="postgres://${db_user}:${db_pass}@127.0.0.1:5432/${db_name}"
+    export DATABASE_URL
     IS_EXTERNAL_DB=false
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Local PostgreSQL setup complete" >> "${LOG_FILE}"
 }
@@ -790,9 +795,10 @@ build_and_migrate_panel() {
     pnpm run build
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Executing Drizzle ORM database migrations" >> "${LOG_FILE}"
-    pnpm run db:migrate
+    DATABASE_URL="${DATABASE_URL}" pnpm run db:migrate
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Seeding initial blueprints and data" >> "${LOG_FILE}"
+    DATABASE_URL="${DATABASE_URL}" \
     ADMIN_EMAIL="${ADMIN_EMAIL}" \
     ADMIN_USERNAME="${ADMIN_USERNAME}" \
     ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
