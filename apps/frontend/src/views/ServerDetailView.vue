@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useServerStore } from '../stores/server.js';
 import TelemetryDeck from '../components/cockpit/TelemetryDeck.vue';
@@ -15,15 +15,6 @@ import CockpitSubusersTab from '../components/cockpit/CockpitSubusersTab.vue';
 import CockpitSettingsTab from '../components/cockpit/CockpitSettingsTab.vue';
 import ModuleSlot from '../components/modules/ModuleSlot.vue';
 import {
-  Terminal,
-  Folder,
-  Globe,
-  Rocket,
-  Archive,
-  Database,
-  Clock,
-  Users,
-  Settings,
   Power,
   RotateCcw,
   Square,
@@ -32,6 +23,7 @@ import {
 import { PowerAction } from '@octopus/shared';
 
 const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 const serverStore = useServerStore();
 
@@ -46,7 +38,27 @@ type TabType =
   | 'subusers'
   | 'settings';
 
-const activeTab = ref<TabType>('console');
+const activeTab = computed<TabType>({
+  get: () => {
+    const tab = route.query.tab as TabType;
+    const validTabs: TabType[] = [
+      'console',
+      'files',
+      'network',
+      'startup',
+      'backups',
+      'databases',
+      'schedules',
+      'subusers',
+      'settings',
+    ];
+    return validTabs.includes(tab) ? tab : 'console';
+  },
+  set: (val: TabType) => {
+    router.replace({ query: { ...route.query, tab: val } });
+  },
+});
+
 const serverUuid = String(route.params.id);
 
 onMounted(async () => {
@@ -130,101 +142,6 @@ async function handlePower(action: PowerAction) {
     <!-- Persistent Top Telemetry Deck (Always Visible) -->
     <TelemetryDeck v-if="serverStore.currentServer" :server="serverStore.currentServer" />
 
-    <!-- The 9 Interactive Navigation Tabs -->
-    <div class="flex items-center space-x-1 border-b border-slate-800 pb-px overflow-x-auto text-xs font-medium">
-      <!-- 1. Console -->
-      <button
-        @click="activeTab = 'console'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'console' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Terminal class="w-3.5 h-3.5 mr-1.5" />
-        Live Console
-      </button>
-
-      <!-- 2. Files -->
-      <button
-        @click="activeTab = 'files'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'files' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Folder class="w-3.5 h-3.5 mr-1.5" />
-        File Manager
-      </button>
-
-      <!-- 3. Network & Ports -->
-      <button
-        @click="activeTab = 'network'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'network' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Globe class="w-3.5 h-3.5 mr-1.5" />
-        Network & Ports
-      </button>
-
-      <!-- 4. Startup & Variables -->
-      <button
-        @click="activeTab = 'startup'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'startup' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Rocket class="w-3.5 h-3.5 mr-1.5" />
-        Startup & Variables
-      </button>
-
-      <!-- 5. Backups -->
-      <button
-        @click="activeTab = 'backups'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'backups' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Archive class="w-3.5 h-3.5 mr-1.5" />
-        Backups
-      </button>
-
-      <!-- 6. Databases -->
-      <button
-        @click="activeTab = 'databases'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'databases' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Database class="w-3.5 h-3.5 mr-1.5" />
-        Databases
-      </button>
-
-      <!-- 7. Schedules -->
-      <button
-        @click="activeTab = 'schedules'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'schedules' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Clock class="w-3.5 h-3.5 mr-1.5" />
-        Schedules
-      </button>
-
-      <!-- 8. Team & Subusers -->
-      <button
-        @click="activeTab = 'subusers'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'subusers' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Users class="w-3.5 h-3.5 mr-1.5" />
-        Team & Sub-Users
-      </button>
-
-      <!-- 9. Settings -->
-      <button
-        @click="activeTab = 'settings'"
-        class="flex items-center px-3.5 py-2.5 border-b-2 transition-colors shrink-0"
-        :class="activeTab === 'settings' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'"
-      >
-        <Settings class="w-3.5 h-3.5 mr-1.5" />
-        Settings & Danger Zone
-      </button>
-
-      <!-- Dynamic Module Slot for Extra Extensions -->
-      <ModuleSlot slot-name="server:tabs" :context="{ serverUuid }" />
-    </div>
 
     <!-- Active Tab Workspace Container -->
     <div class="mt-4">
@@ -238,5 +155,8 @@ async function handlePower(action: PowerAction) {
       <CockpitSubusersTab v-else-if="activeTab === 'subusers'" :server-uuid="serverUuid" />
       <CockpitSettingsTab v-else-if="activeTab === 'settings'" :server="serverStore.currentServer" />
     </div>
+
+    <!-- Dynamic Module Slot for Extra Server Extensions -->
+    <ModuleSlot slot-name="server:tabs" :context="{ serverUuid }" />
   </div>
 </template>
