@@ -1,0 +1,23 @@
+{
+  "name": "octopuspanel-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "db:generate": "pnpm --filter @octopus/database db:generate",
+    "db:migrate": "pnpm --filter @octopus/database db:migrate",
+    "db:seed": "pnpm --filter @octopus/database db:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "prettier": "^3.5.3",
+    "turbo": "^2.4.4",
+    "typescript": "^5.8.2"
+  },
+  "packageManager": "pnpm@11.5.2"
+}
