@@ -25,6 +25,17 @@ app.use(
 // Mount API
 app.route('/api/v1', apiRouter);
 
+// System Health Alias
+app.get('/api/system/health', (c) => {
+  return c.json({
+    status: 'healthy',
+    service: 'octopus-panel-backend',
+    version: '0.1.0',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Root fallback / health
 app.get('/', (c) => {
   return c.json({
