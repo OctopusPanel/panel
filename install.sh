@@ -411,6 +411,10 @@ prompt_interactive_config() {
         fi
         if [ -z "$DATABASE_URL" ]; then
             INSTALL_POSTGRES=true
+            local gen_db_pass
+            gen_db_pass="$(generate_db_password 32)"
+            DATABASE_URL="postgres://octopus_user:${gen_db_pass}@127.0.0.1:5432/octopus_panel"
+            export DATABASE_URL
         fi
         return 0
     fi
@@ -454,6 +458,22 @@ prompt_interactive_config() {
         else
             INSTALL_POSTGRES=true
         fi
+    fi
+
+    # Ensure local database connection string is configured in parent shell environment
+    if [ "$INSTALL_POSTGRES" = true ] && [ -z "$DATABASE_URL" ]; then
+        local existing_db_url=""
+        if [ -f "${DEFAULT_INSTALL_DIR}/.env" ]; then
+            existing_db_url="$(grep -E '^DATABASE_URL=' "${DEFAULT_INSTALL_DIR}/.env" 2>/dev/null | cut -d= -f2- | tr -d '"'\''')"
+        fi
+        if [ -n "$existing_db_url" ] && [[ "$existing_db_url" =~ ^postgres(ql)?:// ]]; then
+            DATABASE_URL="$existing_db_url"
+        else
+            local gen_db_pass
+            gen_db_pass="$(generate_db_password 32)"
+            DATABASE_URL="postgres://octopus_user:${gen_db_pass}@127.0.0.1:5432/octopus_panel"
+        fi
+        export DATABASE_URL
     fi
 
     # 3. Admin Account Setup
@@ -595,9 +615,9 @@ install_base_tools() {
     if [ "$OS_FAMILY" = "debian" ]; then
         export DEBIAN_FRONTEND=noninteractive
         apt-get update -y
-        apt-get install -y curl wget git tar openssl ca-certificates gnupg
+        apt-get install -y curl wget git tar openssl ca-certificates gnupg sudo
     elif [ "$OS_FAMILY" = "rhel" ]; then
-        $PKG_MANAGER install -y curl wget git tar openssl ca-certificates gnupg2
+        $PKG_MANAGER install -y curl wget git tar openssl ca-certificates gnupg2 sudo
     fi
 }
 
@@ -665,40 +685,77 @@ provision_local_postgres() {
 
     local db_name="octopus_panel"
     local db_user="octopus_user"
-    local db_pass
-    db_pass="$(generate_db_password 32)"
+    local db_pass=""
+
+    if [[ "$DATABASE_URL" =~ postgres(ql)?://([^:]+):([^@]+)@[^/]+/([^?]+) ]]; then
+        db_user="${BASH_REMATCH[2]}"
+        db_pass="${BASH_REMATCH[3]}"
+        db_name="${BASH_REMATCH[4]}"
+    fi
+
+    if [ -z "$db_pass" ]; then
+        db_pass="$(generate_db_password 32)"
+        DATABASE_URL="postgres://${db_user}:${db_pass}@127.0.0.1:5432/${db_name}"
+        export DATABASE_URL
+    fi
+
+    # Cache DATABASE_URL to persistent temp file for multi-step subshell reliability
+    echo "${DATABASE_URL}" > /tmp/.octopus_panel_db_url 2>/dev/null || true
+    chmod 600 /tmp/.octopus_panel_db_url 2>/dev/null || true
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Configuring database '${db_name}' and user '${db_user}'" >> "${LOG_FILE}"
 
-    # Setup user & database via postgres user
-    local psql_cmd
-    if command -v sudo &>/dev/null; then
-        psql_cmd="sudo -u postgres psql"
-    else
-        psql_cmd="su - postgres -c psql"
-    fi
+    exec_pg_sql() {
+        local sql="$1"
+        local db="${2:-postgres}"
+        if command -v sudo &>/dev/null; then
+            sudo -u postgres psql -d "${db}" -c "${sql}"
+        elif command -v runuser &>/dev/null; then
+            runuser -u postgres -- psql -d "${db}" -c "${sql}"
+        else
+            su - postgres -c "psql -d '${db}' -c \"${sql}\""
+        fi
+    }
+
+    query_pg_sql() {
+        local sql="$1"
+        local db="${2:-postgres}"
+        if command -v sudo &>/dev/null; then
+            sudo -u postgres psql -d "${db}" -t -A -c "${sql}"
+        elif command -v runuser &>/dev/null; then
+            runuser -u postgres -- psql -d "${db}" -t -A -c "${sql}"
+        else
+            su - postgres -c "psql -d '${db}' -t -A -c \"${sql}\""
+        fi
+    }
 
     # Create user if not exists
-    $psql_cmd -tc "SELECT 1 FROM pg_roles WHERE rolname = '${db_user}'" | grep -q 1 || \
-        $psql_cmd -c "CREATE USER ${db_user} WITH ENCRYPTED PASSWORD '${db_pass}';"
+    if ! query_pg_sql "SELECT 1 FROM pg_roles WHERE rolname = '${db_user}'" | grep -q 1; then
+        exec_pg_sql "CREATE USER ${db_user} WITH ENCRYPTED PASSWORD '${db_pass}';"
+    fi
 
     # Always ensure password is synchronized
-    $psql_cmd -c "ALTER USER ${db_user} WITH ENCRYPTED PASSWORD '${db_pass}';"
+    exec_pg_sql "ALTER USER ${db_user} WITH ENCRYPTED PASSWORD '${db_pass}';"
 
     # Create database if not exists
-    $psql_cmd -tc "SELECT 1 FROM pg_database WHERE datname = '${db_name}'" | grep -q 1 || \
-        $psql_cmd -c "CREATE DATABASE ${db_name} OWNER ${db_user};"
+    if ! query_pg_sql "SELECT 1 FROM pg_database WHERE datname = '${db_name}'" | grep -q 1; then
+        exec_pg_sql "CREATE DATABASE ${db_name} OWNER ${db_user};"
+    fi
 
-    $psql_cmd -c "GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};"
-    $psql_cmd -c "ALTER DATABASE ${db_name} OWNER TO ${db_user};"
+    exec_pg_sql "GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};"
+    exec_pg_sql "ALTER DATABASE ${db_name} OWNER TO ${db_user};"
 
     # PostgreSQL 15+ revokes CREATE on schema public by default; explicitly grant to db_user
-    $psql_cmd -d "${db_name}" -c "GRANT ALL ON SCHEMA public TO ${db_user};" 2>/dev/null || true
-    $psql_cmd -d "${db_name}" -c "ALTER SCHEMA public OWNER TO ${db_user};" 2>/dev/null || true
+    exec_pg_sql "GRANT ALL ON SCHEMA public TO ${db_user};" "${db_name}" 2>/dev/null || true
+    exec_pg_sql "ALTER SCHEMA public OWNER TO ${db_user};" "${db_name}" 2>/dev/null || true
 
-    # Construct connection string
-    DATABASE_URL="postgres://${db_user}:${db_pass}@127.0.0.1:5432/${db_name}"
-    export DATABASE_URL
+    # Immediately verify connectivity and authentication via local TCP
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Verifying database authentication for user '${db_user}'" >> "${LOG_FILE}"
+    PGPASSWORD="${db_pass}" psql -h 127.0.0.1 -p 5432 -U "${db_user}" -d "${db_name}" -c "SELECT 1;" >> "${LOG_FILE}" 2>&1 || {
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: PostgreSQL authentication failed for user '${db_user}'" >> "${LOG_FILE}"
+        return 1
+    }
+
     IS_EXTERNAL_DB=false
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Local PostgreSQL setup complete" >> "${LOG_FILE}"
 }
@@ -731,6 +788,16 @@ deploy_panel_files() {
     fi
 
     mkdir -p "${target_dir}" "${DEFAULT_CONFIG_DIR}" "${DEFAULT_LOG_DIR}"
+
+    # Ensure DATABASE_URL is available
+    if [ -z "$DATABASE_URL" ]; then
+        if [ -f /tmp/.octopus_panel_db_url ]; then
+            DATABASE_URL="$(cat /tmp/.octopus_panel_db_url 2>/dev/null)"
+        elif [ -f "${target_dir}/.env" ]; then
+            DATABASE_URL="$(grep -E '^DATABASE_URL=' "${target_dir}/.env" 2>/dev/null | cut -d= -f2- | tr -d '"'\''')"
+        fi
+        export DATABASE_URL
+    fi
 
     if [ -n "$LOCAL_SOURCE" ] && [ -d "$LOCAL_SOURCE" ]; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploying panel from local source: ${LOCAL_SOURCE}" >> "${LOG_FILE}"
@@ -788,13 +855,25 @@ build_and_migrate_panel() {
     local target_dir="${DEFAULT_INSTALL_DIR}"
     cd "${target_dir}"
 
+    # Ensure DATABASE_URL is available
+    if [ -z "$DATABASE_URL" ]; then
+        if [ -f /tmp/.octopus_panel_db_url ]; then
+            DATABASE_URL="$(cat /tmp/.octopus_panel_db_url 2>/dev/null)"
+        elif [ -f "${target_dir}/.env" ]; then
+            DATABASE_URL="$(grep -E '^DATABASE_URL=' "${target_dir}/.env" 2>/dev/null | cut -d= -f2- | tr -d '"'\''')"
+        fi
+        export DATABASE_URL
+    fi
+
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Installing project dependencies with pnpm" >> "${LOG_FILE}"
     pnpm install --frozen-lockfile --prod=false || pnpm install --prod=false
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Building monorepo assets" >> "${LOG_FILE}"
     pnpm run build
 
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Executing Drizzle ORM database migrations" >> "${LOG_FILE}"
+    local sanitized_db_url
+    sanitized_db_url="$(echo "${DATABASE_URL}" | sed -E 's/:([^@:]+)@/:****@/')"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Executing Drizzle ORM database migrations with ${sanitized_db_url}" >> "${LOG_FILE}"
     DATABASE_URL="${DATABASE_URL}" pnpm run db:migrate
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Seeding initial blueprints and data" >> "${LOG_FILE}"
@@ -1042,6 +1121,9 @@ main() {
             exit 1
         fi
     fi
+
+    # Cleanup temporary credentials cache
+    rm -f /tmp/.octopus_panel_db_url 2>/dev/null || true
 
     # Success Banner
     show_success_box
