@@ -19,10 +19,11 @@ const { Pool } = pg;
 export type DatabaseInstance = ReturnType<typeof createDatabase>;
 
 export function createDatabase(connectionString?: string) {
+  const rawUrl = connectionString || process.env.DATABASE_URL;
   const connection =
-    connectionString ||
-    process.env.DATABASE_URL ||
-    'postgresql://octopus:octopus@localhost:5432/octopuspanel';
+    rawUrl && rawUrl.trim().length > 0
+      ? rawUrl.trim()
+      : 'postgresql://octopus:octopus@localhost:5432/octopuspanel';
   const pool = new Pool({
     connectionString: connection,
   });
