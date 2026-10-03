@@ -133,7 +133,7 @@ onMounted(() => {
       </div>
 
       <p class="text-[11px] text-slate-400">
-        Variables highlighted with brackets (e.g. <code class="text-blue-400">{{ '{{SERVER_MEMORY}}' }}</code>) are substituted in real-time when saving.
+        Variables highlighted with brackets (e.g. <code class="text-blue-400" v-pre>{{SERVER_MEMORY}}</code>) are substituted in real-time when saving.
       </p>
     </div>
 
