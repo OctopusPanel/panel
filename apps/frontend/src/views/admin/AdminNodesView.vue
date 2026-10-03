@@ -104,16 +104,21 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-800/60 font-mono">
-          <tr v-for="node in nodes" :key="node.id" class="hover:bg-slate-800/30 transition-colors">
-            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center">
-              <Cpu class="w-4 h-4 text-amber-400 mr-2" />
-              {{ node.name }}
+          <tr
+            v-for="node in nodes"
+            :key="node.id"
+            @click="$router.push(`/admin/nodes/${node.id}`)"
+            class="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+          >
+            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center group-hover:text-amber-400 transition-colors">
+              <Cpu class="w-4 h-4 text-amber-400 mr-2 shrink-0" />
+              <span>{{ node.name }}</span>
             </td>
             <td class="py-3 px-4 text-slate-400">{{ node.fqdn }}:{{ node.apiPort }}</td>
             <td class="py-3 px-4 text-slate-300">{{ node.memoryLimit }} MB</td>
             <td class="py-3 px-4 text-slate-300">{{ Math.round(node.diskLimit / 1024) }} GB</td>
             <td class="py-3 px-4 text-slate-400">{{ node.serversCount || 0 }}</td>
-            <td class="py-3 px-4 text-right space-x-2">
+            <td class="py-3 px-4 text-right space-x-2" @click.stop>
               <button
                 @click="fetchSetupCommand(node.id)"
                 class="inline-flex items-center px-2 py-1 text-[11px] rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
@@ -121,6 +126,12 @@ onMounted(() => {
                 <Terminal class="w-3 h-3 mr-1" />
                 {{ t('admin.nodes.installerCommand') }}
               </button>
+              <router-link
+                :to="`/admin/nodes/${node.id}`"
+                class="inline-flex items-center px-2.5 py-1 text-[11px] font-sans font-medium rounded bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+              >
+                Manage
+              </router-link>
             </td>
           </tr>
         </tbody>

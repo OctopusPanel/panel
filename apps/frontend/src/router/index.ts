@@ -36,9 +36,19 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../views/admin/AdminNodesView.vue'),
       },
       {
+        path: 'nodes/:id',
+        name: 'admin-node-detail',
+        component: () => import('../views/admin/AdminNodeDetailView.vue'),
+      },
+      {
         path: 'blueprints',
         name: 'admin-blueprints',
         component: () => import('../views/admin/AdminBlueprintsView.vue'),
+      },
+      {
+        path: 'blueprints/:id',
+        name: 'admin-blueprint-detail',
+        component: () => import('../views/admin/AdminBlueprintDetailView.vue'),
       },
       {
         path: 'allocations',

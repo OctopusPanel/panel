@@ -70,17 +70,31 @@ onMounted(() => {
             <th class="py-3 px-4">Author</th>
             <th class="py-3 px-4">{{ t('admin.blueprints.dockerImage') }}</th>
             <th class="py-3 px-4">{{ t('nav.servers') }}</th>
+            <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-800/60 font-mono">
-          <tr v-for="bp in blueprints" :key="bp.id" class="hover:bg-slate-800/30 transition-colors">
-            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center">
-              <Layers class="w-4 h-4 text-blue-400 mr-2" />
-              {{ bp.name }}
+          <tr
+            v-for="bp in blueprints"
+            :key="bp.id"
+            @click="$router.push(`/admin/blueprints/${bp.id}`)"
+            class="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+          >
+            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center group-hover:text-amber-400 transition-colors">
+              <Layers class="w-4 h-4 text-amber-400 mr-2 shrink-0" />
+              <span>{{ bp.name }}</span>
             </td>
-            <td class="py-3 px-4 text-slate-400">{{ bp.author }}</td>
+            <td class="py-3 px-4 text-slate-400 font-sans">{{ bp.author }}</td>
             <td class="py-3 px-4 text-slate-300 truncate max-w-xs">{{ bp.dockerImage }}</td>
             <td class="py-3 px-4 text-slate-400">{{ bp.serversCount || 0 }}</td>
+            <td class="py-3 px-4 text-right" @click.stop>
+              <router-link
+                :to="`/admin/blueprints/${bp.id}`"
+                class="inline-flex items-center px-2.5 py-1 text-[11px] font-sans font-medium rounded bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+              >
+                Configure Studio
+              </router-link>
+            </td>
           </tr>
         </tbody>
       </table>
