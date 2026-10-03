@@ -20,6 +20,10 @@ import {
   EggVariable,
   DemoAllocation,
   DemoServer,
+  demoSystemUpdates,
+  demoDatabaseSnapshots,
+  DemoSystemUpdateInfo,
+  DemoDatabaseSnapshot,
 } from './demo-data.js';
 
 export class ApiService {
@@ -440,6 +444,7 @@ export class ApiService {
           dockerVersion: 'Docker Engine v26.1.4',
           cgroupsV2: true,
           daemonStatus: 'online',
+          daemonVersion: 'v0.1.0',
           loadAvg: [0.15, 0.2, 0.25],
         };
         demoNodes.push(created);
@@ -472,6 +477,11 @@ export class ApiService {
         return {
           command: `curl -sSL https://get.octopuspanel.com/tentacle/install.sh | sudo bash -s -- --token ${node.token} --panel-url http://localhost:5173`,
         } as unknown as T;
+      }
+
+      if (action === 'update' && method === 'POST') {
+        (node as any).daemonVersion = 'v0.2.0';
+        return { success: true, message: `Node ${node.name} updated to v0.2.0` } as unknown as T;
       }
 
       if (method === 'GET') {
@@ -677,6 +687,57 @@ export class ApiService {
       return { success: true, module: target } as unknown as T;
     }
 
+    // Admin System & Updates
+    if (cleanEndpoint === '/admin/system/updates') {
+      return demoSystemUpdates as unknown as T;
+    }
+
+    if (cleanEndpoint === '/admin/system/update-panel' && method === 'POST') {
+      demoSystemUpdates.currentVersion = demoSystemUpdates.latestVersion;
+      demoSystemUpdates.hasUpdate = false;
+      return { success: true, message: 'OctopusPanel successfully updated.' } as unknown as T;
+    }
+
+    if (cleanEndpoint === '/admin/system/database-snapshots') {
+      if (method === 'GET') {
+        return demoDatabaseSnapshots as unknown as T;
+      }
+      if (method === 'POST') {
+        const now = new Date();
+        const id = `manual-backup-v${demoSystemUpdates.currentVersion}-${now.getTime()}.sql.gz`;
+        const newSnap: DemoDatabaseSnapshot = {
+          id,
+          filename: id,
+          sizeBytes: 2516582,
+          sizeFormatted: '2.40 MB',
+          createdAt: now.toISOString(),
+          type: 'manual',
+          version: demoSystemUpdates.currentVersion,
+        };
+        demoDatabaseSnapshots.unshift(newSnap);
+        return newSnap as unknown as T;
+      }
+    }
+
+    if (cleanEndpoint.startsWith('/admin/system/database-snapshots/')) {
+      const snapId = cleanEndpoint
+        .replace('/admin/system/database-snapshots/', '')
+        .replace('/restore', '')
+        .replace('/download', '');
+
+      if (cleanEndpoint.endsWith('/restore') && method === 'POST') {
+        return { success: true, message: `Database successfully restored from snapshot ${snapId}` } as unknown as T;
+      }
+
+      if (method === 'DELETE') {
+        const idx = demoDatabaseSnapshots.findIndex((s) => s.id === snapId);
+        if (idx !== -1) {
+          demoDatabaseSnapshots.splice(idx, 1);
+        }
+        return { success: true, message: `Snapshot ${snapId} deleted` } as unknown as T;
+      }
+    }
+
     return {} as unknown as T;
   }
 
@@ -742,5 +803,173 @@ export class ApiService {
       method: 'DELETE',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+  }
+
+  // System & Updates API
+  static async getSystemUpdates(): Promise<DemoSystemUpdateInfo> {
+    return this.get<DemoSystemUpdateInfo>('/admin/system/updates');
+  }
+
+  static async updatePanel(targetVersion?: string): Promise<{ success: boolean; message: string }> {
+    return this.post<{ success: boolean; message: string }>('/admin/system/update-panel', { targetVersion });
+  }
+
+  static async updateNode(
+    nodeId: number,
+    payload?: { targetVersion?: string; sha256?: string; downloadUrl?: string }
+  ): Promise<{ success: boolean; message: string }> {
+    return this.post<{ success: boolean; message: string }>(`/admin/nodes/${nodeId}/update`, payload || {});
+  }
+
+  static async getDatabaseSnapshots(): Promise<DemoDatabaseSnapshot[]> {
+    return this.get<DemoDatabaseSnapshot[]>('/admin/system/database-snapshots');
+  }
+
+  static async createDatabaseSnapshot(): Promise<DemoDatabaseSnapshot> {
+    return this.post<DemoDatabaseSnapshot>('/admin/system/database-snapshots');
+  }
+
+  static async restoreDatabaseSnapshot(id: string): Promise<{ success: boolean; message: string }> {
+    return this.post<{ success: boolean; message: string }>(`/admin/system/database-snapshots/${id}/restore`);
+  }
+
+  static async deleteDatabaseSnapshot(id: string): Promise<{ success: boolean; message: string }> {
+    return this.delete<{ success: boolean; message: string }>(`/admin/system/database-snapshots/${id}`);
+  }
+
+  static downloadDatabaseSnapshotUrl(id: string): string {
+    return `/api/v1/admin/system/database-snapshots/${id}/download`;
+  }
+
+  static subscribeUpdateStream(
+    onEvent: (event: {
+      type: 'step' | 'log' | 'done';
+      step?: number;
+      totalSteps?: number;
+      title?: string;
+      progress?: number;
+      line?: string;
+      stream?: string;
+      success?: boolean;
+      message?: string;
+    }) => void
+  ): () => void {
+    if (this.isDemoMode()) {
+      let aborted = false;
+      const steps = [
+        {
+          step: 1,
+          totalSteps: 4,
+          title: 'Safety Pre-Check & Automated DB Snapshot',
+          progress: 25,
+          logs: [
+            '> Backing up configuration environment...',
+            '> Creating pre-migration database snapshot...',
+            `> Snapshot saved: pre-migration-backup-v0.1.0-${Date.now()}.sql.gz (2.42 MB)`,
+          ],
+        },
+        {
+          step: 2,
+          totalSteps: 4,
+          title: 'Pulling Latest Codebase & Release Assets',
+          progress: 50,
+          logs: [
+            '> git fetch origin && git pull --ff-only',
+            '> Updating 4874831..2a9f110',
+            '> Fast-forwarding code repository to v0.2.0 release tag',
+          ],
+        },
+        {
+          step: 3,
+          totalSteps: 4,
+          title: 'Building Dependencies & Compiling Production Bundles',
+          progress: 75,
+          logs: [
+            '> pnpm install --frozen-lockfile: verifying dependencies... Done in 2.1s',
+            '> pnpm build: 6 packages built successfully',
+            '> Frontend Vite assets compiled to dist/',
+          ],
+        },
+        {
+          step: 4,
+          totalSteps: 4,
+          title: 'Executing Database Schema Migrations',
+          progress: 90,
+          logs: [
+            '> Checking pending database schema migrations with Drizzle ORM...',
+            '> Applying migration: 0002_add_cluster_metrics.sql',
+            '> All database schema migrations verified and applied without errors.',
+          ],
+        },
+      ];
+
+      (async () => {
+        onEvent({
+          type: 'log',
+          line: '🐙 Initializing OctopusPanel 1-Click Self-Update Orchestration...',
+          stream: 'info',
+        });
+
+        for (const s of steps) {
+          if (aborted) return;
+          await new Promise((r) => setTimeout(r, 600));
+          if (aborted) return;
+
+          onEvent({
+            type: 'step',
+            step: s.step,
+            totalSteps: s.totalSteps,
+            title: s.title,
+            progress: s.progress,
+          });
+
+          for (const l of s.logs) {
+            if (aborted) return;
+            await new Promise((r) => setTimeout(r, 300));
+            if (aborted) return;
+            onEvent({ type: 'log', line: l, stream: 'stdout' });
+          }
+        }
+
+        if (aborted) return;
+        await new Promise((r) => setTimeout(r, 600));
+        demoSystemUpdates.currentVersion = demoSystemUpdates.latestVersion;
+        demoSystemUpdates.hasUpdate = false;
+
+        onEvent({
+          type: 'step',
+          step: 4,
+          totalSteps: 4,
+          title: 'Update Complete',
+          progress: 100,
+        });
+        onEvent({
+          type: 'log',
+          line: '\n✨ OctopusPanel successfully updated to v0.2.0! Reloading services...',
+          stream: 'info',
+        });
+        onEvent({
+          type: 'done',
+          success: true,
+          message: 'Update completed successfully!',
+        });
+      })();
+
+      return () => {
+        aborted = true;
+      };
+    }
+
+    const eventSource = new EventSource('/api/v1/admin/system/update-stream');
+    eventSource.addEventListener('update_event', (e) => {
+      try {
+        const parsed = JSON.parse(e.data);
+        onEvent(parsed);
+      } catch {}
+    });
+
+    return () => {
+      eventSource.close();
+    };
   }
 }
