@@ -10,16 +10,11 @@ import {
   Square,
   RotateCcw,
   Cpu,
-  HardDrive,
-  PlusCircle,
   ArrowRight,
   Search,
-  Filter,
   ArrowUpDown,
   Activity,
-  Layers,
   Database,
-  Radio,
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -41,18 +36,11 @@ async function handlePower(id: number | string, action: PowerAction, e: Event) {
   serverStore.fetchServers();
 }
 
-// Top KPI Calculations
+// Server Fleet Status Counts
 const totalServers = computed(() => serverStore.servers.length);
 const runningCount = computed(() => serverStore.servers.filter((s) => s.status === ServerStatus.RUNNING).length);
 const startingCount = computed(() => serverStore.servers.filter((s) => s.status === ServerStatus.STARTING).length);
 const offlineCount = computed(() => serverStore.servers.filter((s) => s.status === ServerStatus.OFFLINE).length);
-
-const totalRamMb = computed(() => serverStore.servers.reduce((sum, s) => sum + (s.memory || 0), 0));
-const accountRamQuotaMb = 32768; // 32 GB Account Quota
-const ramPoolPercent = computed(() => Math.min(100, Math.round((totalRamMb.value / accountRamQuotaMb) * 100)));
-
-const totalDiskMb = computed(() => serverStore.servers.reduce((sum, s) => sum + (s.disk || 0), 0));
-const totalDiskGb = computed(() => (totalDiskMb.value / 1024).toFixed(1));
 
 // Filtered & Sorted Servers
 const filteredServers = computed(() => {
@@ -111,7 +99,7 @@ function getStatusBadge(status: string) {
 <template>
   <div class="space-y-6 max-w-7xl mx-auto pb-12">
     <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center">
           <Activity class="w-5 h-5 text-blue-500 mr-2.5" />
@@ -120,106 +108,6 @@ function getStatusBadge(status: string) {
         <p class="text-xs text-slate-400 mt-1">
           Real-time cluster telemetry, high-density container roster, and instant workload controls.
         </p>
-      </div>
-
-      <router-link
-        to="/admin/servers"
-        class="flex items-center px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-500/20"
-      >
-        <PlusCircle class="w-4 h-4 mr-2" />
-        Quick Deploy Server
-      </router-link>
-    </div>
-
-    <!-- Top KPI Stat Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- KPI 1: Server Fleet Breakdown -->
-      <div class="bg-[#111622] border border-slate-800/80 rounded-xl p-4 shadow-lg flex flex-col justify-between">
-        <div class="flex items-center justify-between text-slate-400 mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300">
-            <ServerIcon class="w-4 h-4 text-blue-400 mr-1.5" />
-            Total Fleet
-          </span>
-          <span class="text-xs font-bold text-white font-mono">{{ totalServers }} Deployed</span>
-        </div>
-        <div>
-          <div class="flex items-baseline space-x-2 my-1">
-            <span class="text-2xl font-black text-white font-mono">{{ runningCount }}</span>
-            <span class="text-xs text-emerald-400 font-medium font-mono">online</span>
-            <span class="text-slate-600">&bull;</span>
-            <span class="text-sm font-semibold text-slate-400 font-mono">{{ offlineCount }}</span>
-            <span class="text-xs text-slate-500 font-mono">stopped</span>
-          </div>
-          <div class="flex items-center space-x-1.5 mt-2">
-            <div class="h-1.5 rounded-full bg-emerald-500 transition-all" :style="{ width: `${totalServers ? (runningCount / totalServers) * 100 : 0}%` }"></div>
-            <div class="h-1.5 rounded-full bg-amber-500 transition-all" :style="{ width: `${totalServers ? (startingCount / totalServers) * 100 : 0}%` }"></div>
-            <div class="h-1.5 rounded-full bg-slate-700 transition-all flex-1"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI 2: Account RAM Utilization -->
-      <div class="bg-[#111622] border border-slate-800/80 rounded-xl p-4 shadow-lg flex flex-col justify-between">
-        <div class="flex items-center justify-between text-slate-400 mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300">
-            <Database class="w-4 h-4 text-purple-400 mr-1.5" />
-            RAM Pool Allocation
-          </span>
-          <span class="text-xs font-mono font-bold text-purple-400">{{ ramPoolPercent }}%</span>
-        </div>
-        <div>
-          <div class="flex items-baseline justify-between my-1 font-mono">
-            <span class="text-xl font-bold text-white">{{ (totalRamMb / 1024).toFixed(1) }} GB</span>
-            <span class="text-xs text-slate-500">/ {{ (accountRamQuotaMb / 1024).toFixed(0) }} GB quota</span>
-          </div>
-          <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-2">
-            <div
-              class="h-full rounded-full transition-all duration-500 bg-purple-500"
-              :style="{ width: `${ramPoolPercent}%` }"
-            ></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI 3: Storage Allocation -->
-      <div class="bg-[#111622] border border-slate-800/80 rounded-xl p-4 shadow-lg flex flex-col justify-between">
-        <div class="flex items-center justify-between text-slate-400 mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300">
-            <HardDrive class="w-4 h-4 text-emerald-400 mr-1.5" />
-            Storage Footprint
-          </span>
-          <span class="text-[10px] text-slate-500 font-mono">NVMe Tier</span>
-        </div>
-        <div>
-          <div class="flex items-baseline justify-between my-1 font-mono">
-            <span class="text-xl font-bold text-white">{{ totalDiskGb }} GB</span>
-            <span class="text-xs text-slate-500">across 4 hosts</span>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-2 font-mono">
-            All nodes healthy with ZFS / ext4 replication
-          </p>
-        </div>
-      </div>
-
-      <!-- KPI 4: Quick Deploy CTA -->
-      <div class="bg-gradient-to-br from-[#131a29] to-[#0f1420] border border-blue-500/30 rounded-xl p-4 shadow-lg flex flex-col justify-between hover:border-blue-500/50 transition-all">
-        <div class="flex items-center justify-between text-blue-400 mb-1">
-          <span class="text-xs font-semibold uppercase tracking-wider flex items-center">
-            <Layers class="w-4 h-4 mr-1.5" />
-            Instant Scale
-          </span>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        </div>
-        <div>
-          <p class="text-xs text-slate-300 font-medium">Ready for another game server?</p>
-          <router-link
-            to="/admin/servers"
-            class="mt-2 w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center transition-colors shadow-lg shadow-blue-500/10"
-          >
-            Deploy Container
-            <ArrowRight class="w-3.5 h-3.5 ml-1.5" />
-          </router-link>
-        </div>
       </div>
     </div>
 
