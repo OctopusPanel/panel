@@ -90,8 +90,12 @@ function handleLogout() {
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Top Navbar -->
       <header class="h-16 bg-[#111622]/60 backdrop-blur-sm border-b border-slate-800/80 px-6 flex items-center justify-between">
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
           <h2 class="text-sm font-semibold text-slate-200">{{ t('nav.clientArea') }}</h2>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+            Demo Mode Active
+          </span>
         </div>
         <div class="flex items-center space-x-4">
           <LanguageSwitcher />

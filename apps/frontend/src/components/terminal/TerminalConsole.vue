@@ -22,6 +22,7 @@ const isConnected = ref(false);
 let term: Terminal | null = null;
 let fitAddon: FitAddon | null = null;
 let socket: WebSocket | null = null;
+let demoTimer: any = null;
 
 async function initTerminal() {
   if (!terminalContainer.value) return;
@@ -59,6 +60,22 @@ async function initTerminal() {
 }
 
 async function connectSocket() {
+  if (ApiService.isDemoMode()) {
+    isConnected.value = true;
+    term?.writeln('\x1b[32m[OctopusPanel]\x1b[0m Connected to daemon live terminal (Simulated Stream).\r\n');
+    term?.writeln('\x1b[90m[18:30:00 INFO]: Preparing start region for dimension minecraft:overworld\x1b[0m');
+    term?.writeln('\x1b[90m[18:30:01 INFO]: Preparing spawn area: 100%\x1b[0m');
+    term?.writeln('\x1b[32m[18:30:02 INFO]: [Paper] Done (3.84s)! For help, type "help"\x1b[0m');
+    term?.writeln('\x1b[38;5;39m[OctopusPanel] Node-DE-Frankfurt-01: Container active on port 25565\x1b[0m\r\n');
+
+    demoTimer = setInterval(() => {
+      const tps = (19.95 + Math.random() * 0.05).toFixed(2);
+      const mem = Math.floor(1800 + Math.random() * 400);
+      term?.writeln(`\x1b[90m[Heartbeat] TPS: ${tps} | Memory: ${mem} MB / 4096 MB | Active Threads: 24\x1b[0m`);
+    }, 10000);
+    return;
+  }
+
   try {
     const res = await ApiService.get<{ token: string; socketUrl: string }>(
       `/client/servers/${props.serverUuid}/ws-token`,
@@ -103,9 +120,31 @@ function sendCommand() {
   if (!commandInput.value.trim()) return;
 
   const cmd = commandInput.value;
+  term?.writeln(`\x1b[34m> ${cmd}\x1b[0m`);
+
+  if (ApiService.isDemoMode()) {
+    setTimeout(() => {
+      const lower = cmd.toLowerCase().trim();
+      if (lower === 'help') {
+        term?.writeln('\x1b[33mAvailable commands: list, tps, version, memory, say <msg>, stop\x1b[0m');
+      } else if (lower === 'list') {
+        term?.writeln('\x1b[32mThere are 4 of a max of 50 players online: Alex, Max, Steve, Notch\x1b[0m');
+      } else if (lower === 'tps') {
+        term?.writeln('\x1b[32mTPS from last 1m, 5m, 15m: 20.0, 20.0, 19.98\x1b[0m');
+      } else if (lower === 'version') {
+        term?.writeln('\x1b[36mThis server is running Paper version git-Paper-128 (MC: 1.21.4) (Implementing API version 1.21.4-R0.1-SNAPSHOT)\x1b[0m');
+      } else if (lower.startsWith('say ')) {
+        term?.writeln(`\x1b[35m[Server] ${cmd.slice(4)}\x1b[0m`);
+      } else {
+        term?.writeln(`\x1b[90m[Server thread/INFO]: Executed command '${cmd}'\x1b[0m`);
+      }
+    }, 120);
+    commandInput.value = '';
+    return;
+  }
+
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify({ event: 'send_command', args: [cmd] }));
-    term?.writeln(`\x1b[34m> ${cmd}\x1b[0m`);
   } else {
     term?.writeln(`\x1b[33m[Warning] Terminal not connected. Command not dispatched.\x1b[0m`);
   }
@@ -137,6 +176,10 @@ function onResize() {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onResize);
+  if (demoTimer) {
+    clearInterval(demoTimer);
+    demoTimer = null;
+  }
   if (socket) {
     socket.close();
     socket = null;
