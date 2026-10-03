@@ -70,6 +70,7 @@ onMounted(() => {
             <th class="py-3 px-4">Author</th>
             <th class="py-3 px-4">{{ t('admin.blueprints.dockerImage') }}</th>
             <th class="py-3 px-4">{{ t('nav.servers') }}</th>
+            <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-800/60 font-mono">

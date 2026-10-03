@@ -517,11 +517,10 @@ export class ApiService {
     }
 
     // Admin Blueprint Detail (/admin/blueprints/:id)
-    const adminBpDetailMatch = cleanEndpoint.match(/^\/admin\/blueprints\/(\d+)(?:\/([a-zA-Z-]+))?$/);
+    const adminBpDetailMatch = cleanEndpoint.match(/^\/admin\/blueprints\/([^\/]+)(?:\/([a-zA-Z-]+))?$/);
     if (adminBpDetailMatch) {
       const [, bpIdStr, action] = adminBpDetailMatch;
-      const bpId = Number(bpIdStr);
-      const bp = demoBlueprints.find((b) => b.id === bpId) || demoBlueprints[0];
+      const bp = demoBlueprints.find((b) => String(b.id) === bpIdStr || b.uuid === bpIdStr || b.id === Number(bpIdStr)) || demoBlueprints[0];
 
       if (action === 'export' && method === 'GET') {
         const eggExport = {

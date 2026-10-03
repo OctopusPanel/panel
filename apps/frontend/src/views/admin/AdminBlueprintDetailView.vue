@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { ApiService } from '../../services/api.js';
 import { EggVariable, ConfigParserRule } from '../../services/demo-data.js';
@@ -21,7 +21,7 @@ import {
 } from 'lucide-vue-next';
 
 const route = useRoute();
-const bpId = Number(route.params.id);
+const bpId = computed(() => String(route.params.id || ''));
 
 const blueprint = ref<any | null>(null);
 const isLoading = ref(false);
@@ -54,9 +54,10 @@ const showExportModal = ref(false);
 const exportedJsonString = ref('');
 
 async function loadBlueprint() {
+  if (!bpId.value) return;
   isLoading.value = true;
   try {
-    blueprint.value = await ApiService.get<any>(`/admin/blueprints/${bpId}`);
+    blueprint.value = await ApiService.get<any>(`/admin/blueprints/${bpId.value}`);
   } catch (err) {
     console.error('Failed to load blueprint details:', err);
   } finally {
@@ -64,10 +65,18 @@ async function loadBlueprint() {
   }
 }
 
+watch(
+  () => route.params.id,
+  () => {
+    loadBlueprint();
+  }
+);
+
 async function saveBlueprint() {
+  if (!blueprint.value || !bpId.value) return;
   isSaving.value = true;
   try {
-    await ApiService.put(`/admin/blueprints/${bpId}`, blueprint.value);
+    await ApiService.put(`/admin/blueprints/${bpId.value}`, blueprint.value);
     saveSuccess.value = true;
     setTimeout(() => {
       saveSuccess.value = false;
@@ -114,7 +123,7 @@ function removeVariable(idx: number) {
 
 async function openExportModal() {
   try {
-    const res = await ApiService.get<any>(`/admin/blueprints/${bpId}/export`);
+    const res = await ApiService.get<any>(`/admin/blueprints/${bpId.value}/export`);
     exportedJsonString.value = JSON.stringify(res, null, 2);
     showExportModal.value = true;
   } catch (err) {
@@ -194,8 +203,16 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="flex items-center space-x-1 border-b border-slate-800 pb-px overflow-x-auto text-xs font-medium">
+    <!-- Loading State -->
+    <div v-if="isLoading || !blueprint" class="bg-[#111622] border border-slate-800 rounded-xl p-16 text-center text-xs font-mono text-slate-400 shadow-xl">
+      <Layers class="w-8 h-8 text-amber-500/70 mx-auto mb-3 animate-pulse" />
+      Loading Egg Blueprint Studio...
+    </div>
+
+    <!-- Main Studio Workspace -->
+    <div v-else class="space-y-6">
+      <!-- Navigation Tabs -->
+      <div class="flex items-center space-x-1 border-b border-slate-800 pb-px overflow-x-auto text-xs font-medium">
       <button
         @click="activeTab = 'overview'"
         class="px-3.5 py-2.5 border-b-2 transition-colors"
@@ -468,6 +485,7 @@ onMounted(() => {
         class="w-full bg-[#0b0f17] border border-slate-700 rounded-xl p-4 font-mono text-xs text-emerald-300 outline-none focus:ring-1 focus:ring-amber-500 leading-relaxed resize-none"
         spellcheck="false"
       ></textarea>
+    </div>
     </div>
 
     <!-- Add Variable Modal -->
