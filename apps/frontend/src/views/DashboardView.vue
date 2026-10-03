@@ -70,16 +70,6 @@ const filteredServers = computed(() => {
     });
 });
 
-function getStatusGlow(status: string) {
-  switch (status) {
-    case ServerStatus.RUNNING:
-      return 'border-emerald-500/40 shadow-emerald-500/5 hover:border-emerald-500/70';
-    case ServerStatus.STARTING:
-      return 'border-amber-500/40 shadow-amber-500/5 hover:border-amber-500/70';
-    default:
-      return 'border-slate-800 hover:border-slate-700/80';
-  }
-}
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -207,8 +197,7 @@ function getStatusBadge(status: string) {
         v-for="server in filteredServers"
         :key="server.id"
         :to="`/server/${server.uuid}`"
-        class="group bg-[#111622] hover:bg-[#141b2a] border rounded-xl p-5 transition-all shadow-lg flex flex-col justify-between"
-        :class="getStatusGlow(server.status)"
+        class="group bg-[#111622] hover:bg-[#141b2a] border border-slate-800 hover:border-slate-700/80 rounded-xl p-5 transition-all shadow-lg flex flex-col justify-between"
       >
         <div>
           <!-- Top Row: Name, Identifier & Status Pill with Glow -->
