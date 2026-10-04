@@ -103,8 +103,8 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <h3 class="text-sm font-bold text-white flex items-center">
-          <Globe class="w-4 h-4 text-blue-400 mr-2" />
-          Network & Port Allocations
+          <Globe class="w-4 h-4 text-primary mr-2" />
+          Network &amp; Port Allocations
         </h3>
         <p class="text-xs text-slate-400 mt-0.5">
           Manage container port bindings, reverse DNS aliases, and secondary ports for web maps, RCON, or query protocols.
@@ -113,7 +113,7 @@ onMounted(() => {
 
       <button
         @click="showRequestModal = true"
-        class="flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-500/10"
+        class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <Plus class="w-3.5 h-3.5 mr-1.5" />
         Request Additional Port
@@ -121,13 +121,13 @@ onMounted(() => {
     </div>
 
     <!-- Allocations Grid & Table -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-500">
+    <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
         Loading network topology...
       </div>
 
       <table v-else class="w-full text-left text-xs">
-        <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-3 px-4">Connection Endpoint</th>
             <th class="py-3 px-4">Alias / FQDN</th>
@@ -136,12 +136,12 @@ onMounted(() => {
             <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60 font-mono">
+        <tbody class="divide-y divide-surface-border/50 font-mono">
           <tr
             v-for="alloc in allocations"
             :key="alloc.id"
-            class="hover:bg-slate-800/30 transition-colors"
-            :class="{ 'bg-blue-500/5': alloc.isPrimary }"
+            class="hover:bg-surface-elevated/40 transition-colors"
+            :class="{ 'bg-primary/5': alloc.isPrimary }"
           >
             <!-- Endpoint -->
             <td class="py-3 px-4 text-slate-200">
@@ -149,10 +149,10 @@ onMounted(() => {
                 <span class="font-bold">{{ alloc.ipAddress }}:{{ alloc.port }}</span>
                 <button
                   @click="copyText(`${alloc.ipAddress}:${alloc.port}`, `ep_${alloc.id}`)"
-                  class="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+                  class="p-1 text-slate-400 hover:text-white rounded hover:bg-surface-elevated transition-colors"
                   title="Copy IP:Port"
                 >
-                  <Check v-if="copiedField === `ep_${alloc.id}`" class="w-3.5 h-3.5 text-emerald-400" />
+                  <Check v-if="copiedField === `ep_${alloc.id}`" class="w-3.5 h-3.5 text-status-online" />
                   <Copy v-else class="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -160,7 +160,7 @@ onMounted(() => {
 
             <!-- Alias / FQDN -->
             <td class="py-3 px-4 text-slate-300">
-              <span v-if="alloc.alias" class="text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 text-[11px]">
+              <span v-if="alloc.alias" class="text-primary-light bg-primary/10 px-2 py-0.5 rounded border border-primary/25 text-[11px]">
                 {{ alloc.alias }}:{{ alloc.port }}
               </span>
               <span v-else class="text-slate-500 text-[11px]">—</span>
@@ -175,12 +175,12 @@ onMounted(() => {
             <td class="py-3 px-4">
               <span
                 v-if="alloc.isPrimary"
-                class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-status-online/15 text-status-online border border-status-online/30"
               >
-                <Star class="w-3 h-3 mr-1 fill-emerald-400" />
+                <Star class="w-3 h-3 mr-1 fill-status-online" />
                 Primary Port
               </span>
-              <span v-else class="text-slate-500 text-[10px]">Secondary</span>
+              <span v-else class="text-slate-400 text-[10px]">Secondary</span>
             </td>
 
             <!-- Actions -->
@@ -188,14 +188,14 @@ onMounted(() => {
               <button
                 v-if="!alloc.isPrimary"
                 @click="setPrimary(alloc.id)"
-                class="px-2 py-1 text-[11px] font-medium text-slate-300 hover:text-white border border-slate-700 hover:bg-slate-800 rounded transition-colors"
+                class="px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:text-white border border-surface-border hover:bg-surface-elevated rounded transition-colors"
                 title="Make Primary Game Port"
               >
                 Set Primary
               </button>
               <button
                 @click="openAliasModal(alloc)"
-                class="p-1 text-slate-400 hover:text-blue-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1 text-slate-400 hover:text-primary rounded hover:bg-surface-elevated transition-colors"
                 title="Edit Note / Alias"
               >
                 <Edit2 class="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ onMounted(() => {
               <button
                 v-if="!alloc.isPrimary"
                 @click="deleteAllocation(alloc.id)"
-                class="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
                 title="Delete Allocation"
               >
                 <Trash2 class="w-3.5 h-3.5" />
@@ -215,9 +215,9 @@ onMounted(() => {
     </div>
 
     <!-- Request Port Modal -->
-    <div v-if="showRequestModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showRequestModal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <h3 class="text-sm font-semibold text-white">Request Secondary Port</h3>
           <button @click="showRequestModal = false" class="text-slate-400 hover:text-white">
             <X class="w-4 h-4" />
@@ -234,25 +234,25 @@ onMounted(() => {
             v-model="requestNote"
             type="text"
             placeholder="e.g. Dynmap Web UI, SimpleVoiceChat"
-            class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-full bg-surface-deep border border-surface-border rounded-lg p-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary focus:border-primary"
           />
         </div>
 
-        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
-          <button @click="showRequestModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-2 border-t border-surface-border">
+          <button @click="showRequestModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="requestPort" class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg">
-            Confirm & Allocate
+          <button @click="requestPort" class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]">
+            Confirm &amp; Allocate
           </button>
         </div>
       </div>
     </div>
 
     <!-- Edit Alias / Note Modal -->
-    <div v-if="showAliasModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showAliasModal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <h3 class="text-sm font-semibold text-white">Configure Port #{{ selectedAllocation?.port }}</h3>
           <button @click="showAliasModal = false" class="text-slate-400 hover:text-white">
             <X class="w-4 h-4" />
@@ -266,7 +266,7 @@ onMounted(() => {
               v-model="aliasInput"
               type="text"
               placeholder="e.g. mc.example.com"
-              class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full bg-surface-deep border border-surface-border rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
 
@@ -276,16 +276,16 @@ onMounted(() => {
               v-model="noteInput"
               type="text"
               placeholder="e.g. Dynmap Web Interface"
-              class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full bg-surface-deep border border-surface-border rounded-lg p-2 text-slate-200 outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
-          <button @click="showAliasModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-2 border-t border-surface-border">
+          <button @click="showAliasModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="saveAlias" class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg">
+          <button @click="saveAlias" class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]">
             Save Settings
           </button>
         </div>

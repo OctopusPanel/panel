@@ -120,12 +120,12 @@ async function handlePower(action: PowerAction) {
 
 <template>
   <div class="space-y-6 max-w-7xl mx-auto pb-12">
-    <!-- Server Top Header Bar -->
-    <div class="flex flex-wrap items-center justify-between pb-4 border-b border-slate-800 gap-4">
+    <!-- Server Top Header Bar Card -->
+    <div class="bg-surface-card border border-surface-border rounded-xl p-5 shadow-xl flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center space-x-3.5">
         <router-link
           to="/"
-          class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+          class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-surface-elevated transition-colors"
           title="Back to Dashboard"
         >
           <ArrowLeft class="w-4 h-4" />
@@ -135,50 +135,50 @@ async function handlePower(action: PowerAction) {
             <h1 class="text-lg font-bold text-white tracking-tight">
               {{ serverStore.currentServer?.name || 'Server Operations Cockpit' }}
             </h1>
-            <span class="text-xs font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+            <span class="text-xs font-mono text-primary-light bg-primary/10 px-2 py-0.5 rounded border border-primary/30">
               #{{ serverStore.currentServer?.identifier }}
             </span>
             <span
-              class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
-              :class="serverStore.currentServer?.status === 'running' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400'"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider"
+              :class="serverStore.currentServer?.status === 'running' ? 'bg-status-online/15 text-status-online border border-status-online/30' : 'bg-surface-deep text-slate-400 border border-surface-border'"
             >
               <span
                 class="w-1.5 h-1.5 rounded-full mr-1.5"
-                :class="serverStore.currentServer?.status === 'running' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'"
+                :class="serverStore.currentServer?.status === 'running' ? 'bg-status-online animate-pulse' : 'bg-slate-500'"
               ></span>
               {{ serverStore.currentServer?.status?.toUpperCase() || 'OFFLINE' }}
             </span>
           </div>
           <p class="text-xs text-slate-400 mt-1 flex items-center space-x-2 font-mono">
             <span>{{ serverStore.currentServer?.node?.name }}</span>
-            <span class="text-slate-600">&bull;</span>
-            <span>{{ serverStore.currentServer?.allocation?.ipAddress }}:{{ serverStore.currentServer?.allocation?.port }}</span>
-            <span v-if="serverStore.currentServer?.allocation?.alias" class="text-blue-400 font-sans">
+            <span class="text-surface-border">&bull;</span>
+            <span class="text-slate-300">{{ serverStore.currentServer?.allocation?.ipAddress }}:{{ serverStore.currentServer?.allocation?.port }}</span>
+            <span v-if="serverStore.currentServer?.allocation?.alias" class="text-primary-light font-sans">
               ({{ serverStore.currentServer?.allocation?.alias }})
             </span>
           </p>
         </div>
       </div>
 
-      <!-- Header Power Controls -->
+      <!-- Header Power Controls (Tactile) -->
       <div class="flex items-center space-x-2">
         <button
           @click="handlePower(PowerAction.START)"
-          class="flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-lg shadow-emerald-600/10"
+          class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-status-online hover:bg-emerald-600 text-slate-950 transition-all shadow-md active:scale-[0.98]"
         >
           <Power class="w-3.5 h-3.5 mr-1.5" />
           {{ t('servers.start') }}
         </button>
         <button
           @click="handlePower(PowerAction.RESTART)"
-          class="flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors shadow-lg shadow-amber-600/10"
+          class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
         >
           <RotateCcw class="w-3.5 h-3.5 mr-1.5" />
           {{ t('servers.restart') }}
         </button>
         <button
           @click="handlePower(PowerAction.STOP)"
-          class="flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-700 hover:bg-rose-600 text-white transition-colors shadow-lg shadow-rose-700/10"
+          class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-status-offline hover:bg-rose-600 text-slate-950 transition-all shadow-md active:scale-[0.98]"
         >
           <Square class="w-3.5 h-3.5 mr-1.5" />
           {{ t('servers.stop') }}
@@ -189,18 +189,39 @@ async function handlePower(action: PowerAction) {
     <!-- Persistent Top Telemetry Deck (Always Visible) -->
     <TelemetryDeck v-if="serverStore.currentServer" :server="serverStore.currentServer" />
 
+    <!-- Sub-Nav Tab Pills -->
+    <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 border-b border-surface-border/60">
+      <button
+        v-for="tId in ['console', 'files', 'network', 'startup', 'backups', 'databases', 'schedules', 'subusers', 'settings']"
+        :key="tId"
+        @click="activeTab = tId as TabType"
+        class="px-3.5 py-1.5 text-xs rounded-lg font-medium transition-all shrink-0 capitalize"
+        :class="activeTab === tId
+          ? 'bg-primary/15 text-primary-light font-semibold border border-primary/30 shadow-sm'
+          : 'text-slate-400 hover:text-slate-200 hover:bg-surface-card'"
+      >
+        {{ tId }}
+      </button>
+    </div>
 
-    <!-- Active Tab Workspace Container -->
+    <!-- Active Tab Workspace Container with Fluid Transition -->
     <div class="mt-4">
-      <CockpitConsoleTab v-if="activeTab === 'console'" :server-uuid="serverUuid" />
-      <CockpitFilesTab v-else-if="activeTab === 'files'" :server-uuid="serverUuid" />
-      <CockpitNetworkTab v-else-if="activeTab === 'network'" :server-uuid="serverUuid" />
-      <CockpitStartupTab v-else-if="activeTab === 'startup'" :server-uuid="serverUuid" />
-      <CockpitBackupsTab v-else-if="activeTab === 'backups'" :server-uuid="serverUuid" />
-      <CockpitDatabasesTab v-else-if="activeTab === 'databases'" :server-uuid="serverUuid" />
-      <CockpitSchedulesTab v-else-if="activeTab === 'schedules'" :server-uuid="serverUuid" />
-      <CockpitSubusersTab v-else-if="activeTab === 'subusers'" :server-uuid="serverUuid" />
-      <CockpitSettingsTab v-else-if="activeTab === 'settings'" :server="serverStore.currentServer" />
+      <transition name="fade-slide" mode="out-in">
+        <component
+          :is="activeTab === 'console' ? CockpitConsoleTab
+            : activeTab === 'files' ? CockpitFilesTab
+            : activeTab === 'network' ? CockpitNetworkTab
+            : activeTab === 'startup' ? CockpitStartupTab
+            : activeTab === 'backups' ? CockpitBackupsTab
+            : activeTab === 'databases' ? CockpitDatabasesTab
+            : activeTab === 'schedules' ? CockpitSchedulesTab
+            : activeTab === 'subusers' ? CockpitSubusersTab
+            : CockpitSettingsTab"
+          :key="activeTab"
+          :server-uuid="serverUuid"
+          :server="serverStore.currentServer"
+        />
+      </transition>
     </div>
 
     <!-- Dynamic Module Slot for Extra Server Extensions -->

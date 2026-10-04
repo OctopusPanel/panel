@@ -50,7 +50,7 @@ onMounted(() => {
 
       <button
         @click="showImportModal = true"
-        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <Upload class="w-4 h-4 mr-2" />
         {{ t('admin.blueprints.importEgg') }}
@@ -58,13 +58,13 @@ onMounted(() => {
     </div>
 
     <!-- Blueprints Table -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-500">
+    <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
         {{ t('common.loading') }}
       </div>
 
       <table v-else class="w-full text-left text-xs">
-        <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-3 px-4">{{ t('servers.name') }}</th>
             <th class="py-3 px-4">Author</th>
@@ -73,15 +73,15 @@ onMounted(() => {
             <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60 font-mono">
+        <tbody class="divide-y divide-surface-border/50 font-mono">
           <tr
             v-for="bp in blueprints"
             :key="bp.id"
             @click="$router.push(`/admin/blueprints/${bp.id}`)"
-            class="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+            class="hover:bg-surface-elevated/40 transition-colors cursor-pointer group"
           >
-            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center group-hover:text-amber-400 transition-colors">
-              <Layers class="w-4 h-4 text-amber-400 mr-2 shrink-0" />
+            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center group-hover:text-primary transition-colors">
+              <Layers class="w-4 h-4 text-primary mr-2 shrink-0" />
               <span>{{ bp.name }}</span>
             </td>
             <td class="py-3 px-4 text-slate-400 font-sans">{{ bp.author }}</td>
@@ -90,7 +90,7 @@ onMounted(() => {
             <td class="py-3 px-4 text-right" @click.stop>
               <router-link
                 :to="`/admin/blueprints/${bp.id}`"
-                class="inline-flex items-center px-2.5 py-1 text-[11px] font-sans font-medium rounded bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+                class="inline-flex items-center px-2.5 py-1 text-[11px] font-sans font-medium rounded bg-surface-deep border border-surface-border text-slate-300 hover:text-white hover:bg-surface-elevated transition-colors"
               >
                 Configure Studio
               </router-link>
@@ -101,16 +101,16 @@ onMounted(() => {
     </div>
 
     <!-- Import Egg Modal -->
-    <div v-if="showImportModal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-2xl shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showImportModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-2xl shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <h3 class="text-sm font-semibold text-white">{{ t('admin.blueprints.importEgg') }}</h3>
-          <button @click="showImportModal = false" class="text-slate-400 hover:text-white">
+          <button @click="showImportModal = false" class="text-slate-400 hover:text-white transition-colors">
             <X class="w-4 h-4" />
           </button>
         </div>
 
-        <div v-if="importError" class="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg text-xs">
+        <div v-if="importError" class="p-3 bg-status-offline/10 border border-status-offline/20 text-status-offline rounded-lg text-xs">
           {{ importError }}
         </div>
 
@@ -122,14 +122,14 @@ onMounted(() => {
           v-model="eggJson"
           rows="12"
           placeholder='{"meta": {"version": "PTDL_v1"}, "name": "Minecraft Paper", ...}'
-          class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-3 text-xs font-mono text-slate-200 outline-none"
+          class="w-full bg-surface-deep border border-surface-border rounded-lg p-3 text-xs font-mono text-slate-200 outline-none focus:border-primary transition-colors"
         ></textarea>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-800">
-          <button @click="showImportModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-3 border-t border-surface-border">
+          <button @click="showImportModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             {{ t('common.cancel') }}
           </button>
-          <button @click="handleImportEgg" class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg">
+          <button @click="handleImportEgg" class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md">
             {{ t('common.create') }}
           </button>
         </div>

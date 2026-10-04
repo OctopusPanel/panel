@@ -269,27 +269,27 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+  <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
     <!-- Breadcrumb & Main Toolbar -->
-    <div class="flex flex-wrap items-center justify-between p-3.5 border-b border-slate-800 bg-[#0d1117] gap-2">
+    <div class="flex flex-wrap items-center justify-between p-3.5 border-b border-surface-border bg-surface-deep gap-2">
       <!-- Breadcrumbs -->
       <div class="flex items-center space-x-1 overflow-x-auto text-xs font-mono">
         <button
           v-if="currentDirectory !== '/home/container'"
           @click="navigateUp"
-          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors mr-1"
+          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-surface-elevated transition-colors mr-1"
           title="Parent Directory"
         >
           <ArrowLeft class="w-3.5 h-3.5" />
         </button>
 
-        <div class="flex items-center space-x-1 bg-slate-800/60 px-2.5 py-1 rounded-md text-slate-300">
+        <div class="flex items-center space-x-1 bg-surface-card border border-surface-border px-2.5 py-1 rounded-md text-slate-300">
           <template v-for="(crumb, index) in breadcrumbs" :key="crumb.path">
-            <span v-if="index > 0" class="text-slate-600">/</span>
+            <span v-if="index > 0" class="text-surface-border">/</span>
             <button
               @click="navigateTo(crumb.path)"
-              class="hover:text-blue-400 transition-colors"
-              :class="index === breadcrumbs.length - 1 ? 'text-blue-400 font-semibold' : 'text-slate-400'"
+              class="hover:text-primary-light transition-colors"
+              :class="index === breadcrumbs.length - 1 ? 'text-primary font-semibold' : 'text-slate-400'"
             >
               {{ crumb.name }}
             </button>
@@ -301,30 +301,30 @@ onBeforeUnmount(() => {
       <div class="flex items-center space-x-2">
         <button
           @click="loadFiles()"
-          class="p-1.5 text-slate-400 hover:text-white border border-slate-700 hover:bg-slate-800 rounded-lg transition-colors"
+          class="p-1.5 text-slate-400 hover:text-white border border-surface-border hover:bg-surface-elevated rounded-lg transition-colors"
           title="Refresh Directory"
         >
           <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': isLoading }" />
         </button>
         <button
           @click="showUploadModal = true"
-          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 transition-colors"
+          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg border border-surface-border hover:bg-surface-elevated text-slate-200 transition-colors"
         >
-          <Upload class="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+          <Upload class="w-3.5 h-3.5 mr-1.5 text-primary" />
           Upload
         </button>
         <button
           @click="showNewFileModal = true"
-          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+          class="flex items-center px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
         >
           <FilePlus class="w-3.5 h-3.5 mr-1.5" />
           New File
         </button>
         <button
           @click="showNewFolderModal = true"
-          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 transition-colors"
+          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg border border-surface-border hover:bg-surface-elevated text-slate-200 transition-colors"
         >
-          <FolderPlus class="w-3.5 h-3.5 mr-1.5 text-amber-400" />
+          <FolderPlus class="w-3.5 h-3.5 mr-1.5 text-primary-light" />
           New Directory
         </button>
       </div>
@@ -333,10 +333,10 @@ onBeforeUnmount(() => {
     <!-- Notification Toast -->
     <div
       v-if="toastMessage"
-      class="bg-blue-600 text-white text-xs px-4 py-2 font-medium flex items-center justify-between transition-all"
+      class="bg-primary text-slate-950 text-xs px-4 py-2 font-semibold flex items-center justify-between transition-all"
     >
       <span>{{ toastMessage }}</span>
-      <Check class="w-3.5 h-3.5 text-white" />
+      <Check class="w-3.5 h-3.5 text-slate-950" />
     </div>
 
     <!-- Files Table -->
@@ -345,12 +345,12 @@ onBeforeUnmount(() => {
         {{ t('common.loading') }}
       </div>
 
-      <div v-else-if="files.length === 0" class="p-12 text-center text-xs text-slate-500">
+      <div v-else-if="files.length === 0" class="p-12 text-center text-xs text-slate-400">
         {{ t('files.emptyDirectory') }}
       </div>
 
       <table v-else class="w-full text-left text-xs">
-        <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-2.5 px-4 font-semibold">Name</th>
             <th class="py-2.5 px-4 font-semibold">Size</th>
@@ -359,11 +359,11 @@ onBeforeUnmount(() => {
             <th class="py-2.5 px-4 font-semibold text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60 font-mono">
+        <tbody class="divide-y divide-surface-border/50 font-mono">
           <tr
             v-for="file in files"
             :key="file.name"
-            class="hover:bg-slate-800/40 transition-colors group cursor-pointer"
+            class="hover:bg-surface-elevated/40 transition-colors group cursor-pointer"
             @click="file.isDirectory ? navigateToChild(file.name) : openFile(file.name)"
           >
             <!-- Name & Icon -->
@@ -371,9 +371,9 @@ onBeforeUnmount(() => {
               <component
                 :is="getFileIcon(file.name, file.isDirectory)"
                 class="w-4 h-4 shrink-0"
-                :class="file.isDirectory ? 'text-amber-400' : 'text-blue-400'"
+                :class="file.isDirectory ? 'text-primary' : 'text-slate-300'"
               />
-              <span class="text-slate-200 group-hover:text-blue-400 transition-colors font-medium">
+              <span class="text-slate-200 group-hover:text-primary-light transition-colors font-medium">
                 {{ file.name }}
               </span>
             </td>
@@ -384,7 +384,7 @@ onBeforeUnmount(() => {
             </td>
 
             <!-- Permissions / Mode -->
-            <td class="py-2.5 px-4 text-slate-500 text-[11px]">
+            <td class="py-2.5 px-4 text-slate-400 text-[11px]">
               {{ file.mode || (file.isDirectory ? 'drwxr-xr-x' : '-rw-r--r--') }}
             </td>
 
@@ -399,7 +399,7 @@ onBeforeUnmount(() => {
               <button
                 v-if="!file.isDirectory"
                 @click="openFile(file.name)"
-                class="p-1 text-slate-400 hover:text-blue-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1 text-slate-400 hover:text-primary rounded hover:bg-surface-elevated transition-colors"
                 title="Edit Code"
               >
                 <Edit3 class="w-3.5 h-3.5" />
@@ -409,7 +409,7 @@ onBeforeUnmount(() => {
               <button
                 v-if="!file.name.endsWith('.zip')"
                 @click="archiveItem(file.name)"
-                class="p-1 text-slate-400 hover:text-amber-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1 text-slate-400 hover:text-primary-light rounded hover:bg-surface-elevated transition-colors"
                 title="Compress to Zip"
               >
                 <Archive class="w-3.5 h-3.5" />
@@ -417,7 +417,7 @@ onBeforeUnmount(() => {
               <button
                 v-else
                 @click="extractItem(file.name)"
-                class="p-1 text-amber-400 hover:text-amber-300 rounded hover:bg-slate-800 transition-colors"
+                class="p-1 text-primary hover:text-primary-light rounded hover:bg-surface-elevated transition-colors"
                 title="Extract Zip"
               >
                 <Archive class="w-3.5 h-3.5" />
@@ -426,7 +426,7 @@ onBeforeUnmount(() => {
               <!-- Delete -->
               <button
                 @click="deleteItem(file.name)"
-                class="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
                 title="Delete"
               >
                 <Trash2 class="w-3.5 h-3.5" />
@@ -442,28 +442,28 @@ onBeforeUnmount(() => {
       v-if="editingFile"
       class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
     >
-      <div class="bg-[#0b0f17] border border-slate-800 rounded-xl w-full max-w-5xl flex flex-col h-[85vh] shadow-2xl overflow-hidden">
+      <div class="bg-surface-card border border-surface-border rounded-xl w-full max-w-5xl flex flex-col h-[85vh] shadow-2xl overflow-hidden">
         <!-- Editor Header -->
-        <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-800 bg-[#111622]">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b border-surface-border bg-surface-deep">
           <div class="flex items-center space-x-2">
-            <FileCode class="w-4 h-4 text-blue-400" />
+            <FileCode class="w-4 h-4 text-primary" />
             <span class="text-xs font-mono text-slate-200 font-semibold">{{ editingFile }}</span>
-            <span class="text-[10px] text-slate-500 font-mono">(Press Ctrl+S to save)</span>
+            <span class="text-[10px] text-slate-400 font-mono">(Press Ctrl+S to save)</span>
           </div>
 
           <div class="flex items-center space-x-2">
             <button
               @click="saveFile"
               :disabled="isSaving"
-              class="flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+              class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
             >
-              <Check v-if="saveSuccess" class="w-3.5 h-3.5 mr-1 text-emerald-300" />
+              <Check v-if="saveSuccess" class="w-3.5 h-3.5 mr-1 text-slate-950" />
               <Save v-else class="w-3.5 h-3.5 mr-1" />
               {{ saveSuccess ? 'Saved!' : 'Save Changes' }}
             </button>
             <button
               @click="editingFile = null"
-              class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-surface-elevated transition-colors"
               title="Close Editor"
             >
               <X class="w-4 h-4" />
@@ -474,14 +474,14 @@ onBeforeUnmount(() => {
         <!-- Editor Body with Line Number Gutter -->
         <div class="flex flex-1 overflow-hidden font-mono text-xs">
           <!-- Line Numbers -->
-          <div class="bg-[#090d14] text-slate-600 select-none py-4 px-3 text-right border-r border-slate-800/80 overflow-hidden leading-relaxed text-[11px]">
+          <div class="bg-surface-deep text-slate-500 select-none py-4 px-3 text-right border-r border-surface-border overflow-hidden leading-relaxed text-[11px]">
             <div v-for="n in lineNumbers" :key="n">{{ n }}</div>
           </div>
 
           <!-- Code Textarea -->
           <textarea
             v-model="fileContent"
-            class="flex-1 w-full bg-[#0b0f17] p-4 text-slate-100 font-mono text-xs outline-none resize-none border-none leading-relaxed overflow-auto selection:bg-blue-600/30"
+            class="flex-1 w-full bg-surface-base p-4 text-slate-100 font-mono text-xs outline-none resize-none border-none leading-relaxed overflow-auto selection:bg-primary/20"
             spellcheck="false"
           ></textarea>
         </div>
@@ -489,11 +489,11 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Upload Modal -->
-    <div v-if="showUploadModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-lg shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showUploadModal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <div class="flex items-center space-x-2">
-            <Upload class="w-4 h-4 text-blue-400" />
+            <Upload class="w-4 h-4 text-primary" />
             <h3 class="text-sm font-semibold text-white">Upload Files to {{ currentDirectory }}</h3>
           </div>
           <button @click="showUploadModal = false" class="text-slate-400 hover:text-white">
@@ -501,32 +501,32 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center bg-[#0d1117]/50 hover:border-blue-500/50 transition-colors">
-          <Upload class="w-8 h-8 text-slate-500 mx-auto mb-2" />
-          <p class="text-xs text-slate-300 font-medium">Drag & Drop files here, or click to browse</p>
-          <p class="text-[10px] text-slate-500 mt-1">Supports jars, config files, zips up to 500 MB</p>
+        <div class="border-2 border-dashed border-surface-border rounded-xl p-8 text-center bg-surface-deep hover:border-primary/50 transition-colors">
+          <Upload class="w-8 h-8 text-slate-400 mx-auto mb-2" />
+          <p class="text-xs text-slate-200 font-medium">Drag &amp; Drop files here, or click to browse</p>
+          <p class="text-[10px] text-slate-400 mt-1">Supports jars, config files, zips up to 500 MB</p>
 
           <input
             type="file"
             multiple
             @change="(e: any) => { uploadFiles = Array.from(e.target.files).map((f: any) => f.name); }"
-            class="mt-4 text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer"
+            class="mt-4 text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-primary file:text-slate-950 file:font-semibold hover:file:bg-primary-dark cursor-pointer"
           />
         </div>
 
-        <div v-if="uploadFiles.length > 0" class="text-xs font-mono text-slate-300 bg-[#0b0f17] p-2.5 rounded-lg border border-slate-800">
-          <span class="text-[10px] text-slate-500 block mb-1">Selected for upload:</span>
-          <div v-for="f in uploadFiles" :key="f" class="text-blue-400">• {{ f }}</div>
+        <div v-if="uploadFiles.length > 0" class="text-xs font-mono text-slate-300 bg-surface-deep p-2.5 rounded-lg border border-surface-border">
+          <span class="text-[10px] text-slate-400 block mb-1">Selected for upload:</span>
+          <div v-for="f in uploadFiles" :key="f" class="text-primary-light">• {{ f }}</div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
-          <button @click="showUploadModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-2 border-t border-surface-border">
+          <button @click="showUploadModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
           <button
             @click="simulateUpload"
             :disabled="isUploading || uploadFiles.length === 0"
-            class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium rounded-lg flex items-center"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark disabled:opacity-50 text-slate-950 font-semibold rounded-lg flex items-center active:scale-[0.98]"
           >
             <RefreshCw v-if="isUploading" class="w-3.5 h-3.5 mr-1.5 animate-spin" />
             {{ isUploading ? 'Uploading...' : 'Start Upload' }}
@@ -536,21 +536,21 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- New Folder Modal -->
-    <div v-if="showNewFolderModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-5 w-full max-w-md shadow-2xl">
+    <div v-if="showNewFolderModal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5 w-full max-w-md shadow-2xl">
         <h3 class="text-sm font-semibold text-slate-100 mb-3">Create New Directory</h3>
         <input
           v-model="newFolderName"
           @keyup.enter="createFolder"
           type="text"
           placeholder="Folder name (e.g. plugins, config)"
-          class="w-full bg-[#0d1117] border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 mb-4 font-mono"
+          class="w-full bg-surface-deep border border-surface-border rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary focus:border-primary mb-4 font-mono"
         />
         <div class="flex justify-end space-x-2">
-          <button @click="showNewFolderModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+          <button @click="showNewFolderModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="createFolder" class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg">
+          <button @click="createFolder" class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]">
             Create Directory
           </button>
         </div>
@@ -558,22 +558,22 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- New File Modal -->
-    <div v-if="showNewFileModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-5 w-full max-w-md shadow-2xl">
+    <div v-if="showNewFileModal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5 w-full max-w-md shadow-2xl">
         <h3 class="text-sm font-semibold text-slate-100 mb-3">Create New File</h3>
         <input
           v-model="newFileName"
           @keyup.enter="createFile"
           type="text"
           placeholder="e.g. server.properties, paper.yml"
-          class="w-full bg-[#0d1117] border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 mb-4 font-mono"
+          class="w-full bg-surface-deep border border-surface-border rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary focus:border-primary mb-4 font-mono"
         />
         <div class="flex justify-end space-x-2">
-          <button @click="showNewFileModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+          <button @click="showNewFileModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="createFile" class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg">
-            Create & Edit
+          <button @click="createFile" class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]">
+            Create &amp; Edit
           </button>
         </div>
       </div>

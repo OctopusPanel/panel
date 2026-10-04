@@ -137,7 +137,7 @@ onMounted(() => {
 
       <button
         @click="showCreateModal = true"
-        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <Plus class="w-4 h-4 mr-2" />
         New Server
@@ -145,13 +145,13 @@ onMounted(() => {
     </div>
 
     <!-- Servers Table -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-500">
+    <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
         {{ t('common.loading') }}
       </div>
 
       <table v-else class="w-full text-left text-xs font-mono">
-        <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-3 px-4">{{ t('servers.name') }}</th>
             <th class="py-3 px-4">Owner</th>
@@ -162,10 +162,10 @@ onMounted(() => {
             <th class="py-3 px-4 text-right">{{ t('common.actions') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60">
-          <tr v-for="srv in allServers" :key="srv.id" class="hover:bg-slate-800/30 transition-colors">
-            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center">
-              <Server class="w-4 h-4 text-blue-400 mr-2" />
+        <tbody class="divide-y divide-surface-border/50">
+          <tr v-for="srv in allServers" :key="srv.id" class="hover:bg-surface-elevated/40 transition-colors">
+            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center font-sans">
+              <Server class="w-4 h-4 text-primary mr-2" />
               {{ srv.name }}
             </td>
             <td class="py-3 px-4 text-slate-300">{{ srv.user?.username }}</td>
@@ -174,8 +174,8 @@ onMounted(() => {
             <td class="py-3 px-4 text-slate-300">{{ srv.memory }} MB</td>
             <td class="py-3 px-4">
               <span
-                class="px-2 py-0.5 rounded text-[10px]"
-                :class="srv.isSuspended ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-slate-700/40 text-slate-300'"
+                class="px-2 py-0.5 rounded text-[10px] border font-medium"
+                :class="srv.isSuspended ? 'bg-status-warning/15 text-status-warning border-status-warning/30' : srv.status === 'running' ? 'bg-status-online/15 text-status-online border-status-online/30' : 'bg-surface-deep text-slate-400 border-surface-border'"
               >
                 {{ srv.isSuspended ? 'Suspended' : srv.status }}
               </span>
@@ -183,7 +183,7 @@ onMounted(() => {
             <td class="py-3 px-4 text-right space-x-2">
               <button
                 @click="toggleSuspend(srv)"
-                class="p-1 text-slate-400 hover:text-amber-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1.5 text-slate-400 hover:text-primary rounded hover:bg-surface-elevated transition-colors"
                 :title="srv.isSuspended ? 'Unsuspend' : 'Suspend'"
               >
                 <Play v-if="srv.isSuspended" class="w-3.5 h-3.5" />
@@ -191,7 +191,7 @@ onMounted(() => {
               </button>
               <button
                 @click="deleteServer(srv.id)"
-                class="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1.5 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
               >
                 <Trash2 class="w-3.5 h-3.5" />
               </button>
@@ -202,53 +202,53 @@ onMounted(() => {
     </div>
 
     <!-- Create Server Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800 flex-shrink-0">
+    <div v-if="showCreateModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border flex-shrink-0">
           <div>
             <h3 class="text-sm font-semibold text-white">Deploy New Server</h3>
             <p class="text-[11px] text-slate-400">Configure resources, runtime image, and egg variables.</p>
           </div>
-          <button @click="showCreateModal = false" class="text-slate-400 hover:text-white">
+          <button @click="showCreateModal = false" class="text-slate-400 hover:text-white transition-colors">
             <X class="w-4 h-4" />
           </button>
         </div>
 
         <div class="space-y-4 text-xs overflow-y-auto py-3 pr-1 flex-1">
           <div>
-            <label class="block text-slate-400 mb-1">Server Name</label>
-            <input v-model="serverForm.name" type="text" placeholder="My Awesome Server" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none" />
+            <label class="block text-slate-400 mb-1 font-medium">Server Name</label>
+            <input v-model="serverForm.name" type="text" placeholder="My Awesome Server" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors" />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-slate-400 mb-1">Owner User</label>
-              <select v-model="serverForm.userId" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none">
+              <label class="block text-slate-400 mb-1 font-medium">Owner User</label>
+              <select v-model="serverForm.userId" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors">
                 <option v-for="u in users" :key="u.id" :value="u.id">{{ u.username }} ({{ u.email }})</option>
               </select>
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">Target Node</label>
-              <select v-model="serverForm.nodeId" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none">
+              <label class="block text-slate-400 mb-1 font-medium">Target Node</label>
+              <select v-model="serverForm.nodeId" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors">
                 <option v-for="n in nodes" :key="n.id" :value="n.id">{{ n.name }}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label class="block text-slate-400 mb-1">Blueprint (Egg)</label>
-            <select v-model="serverForm.blueprintId" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none">
+            <label class="block text-slate-400 mb-1 font-medium">Blueprint (Egg)</label>
+            <select v-model="serverForm.blueprintId" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors">
               <option v-for="b in blueprints" :key="b.id" :value="b.id">{{ b.name }} ({{ b.author }})</option>
             </select>
           </div>
 
           <!-- Docker Image / Version Selection -->
           <div>
-            <label class="block text-slate-400 mb-1">Docker Image / Runtime Version</label>
+            <label class="block text-slate-400 mb-1 font-medium">Docker Image / Runtime Version</label>
             <select
               v-if="availableImages.length > 0"
               v-model="serverForm.dockerImage"
-              class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none font-mono"
+              class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none font-mono focus:border-primary transition-colors"
             >
               <option v-for="img in availableImages" :key="img.value" :value="img.value">
                 {{ img.label }} ({{ img.value }})
@@ -259,58 +259,58 @@ onMounted(() => {
               v-model="serverForm.dockerImage"
               type="text"
               placeholder="e.g. ghcr.io/pterodactyl/yolks:java_21"
-              class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none font-mono"
+              class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none font-mono focus:border-primary transition-colors"
             />
           </div>
 
           <!-- Resource Allocations -->
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="block text-slate-400 mb-1">Memory (MB)</label>
-              <input v-model.number="serverForm.memory" type="number" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none font-mono" />
+              <label class="block text-slate-400 mb-1 font-medium">Memory (MB)</label>
+              <input v-model.number="serverForm.memory" type="number" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none font-mono focus:border-primary transition-colors" />
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">CPU (%)</label>
-              <input v-model.number="serverForm.cpu" type="number" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none font-mono" />
+              <label class="block text-slate-400 mb-1 font-medium">CPU (%)</label>
+              <input v-model.number="serverForm.cpu" type="number" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none font-mono focus:border-primary transition-colors" />
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">Disk (MB)</label>
-              <input v-model.number="serverForm.disk" type="number" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none font-mono" />
+              <label class="block text-slate-400 mb-1 font-medium">Disk (MB)</label>
+              <input v-model.number="serverForm.disk" type="number" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none font-mono focus:border-primary transition-colors" />
             </div>
           </div>
 
           <!-- Blueprint / Egg Variables -->
-          <div v-if="selectedBlueprint?.variables && selectedBlueprint.variables.length > 0" class="space-y-3 pt-3 border-t border-slate-800">
+          <div v-if="selectedBlueprint?.variables && selectedBlueprint.variables.length > 0" class="space-y-3 pt-3 border-t border-surface-border">
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Egg Variables</h4>
-              <span class="text-[10px] text-slate-500 font-mono">{{ selectedBlueprint.variables.length }} options</span>
+              <span class="text-[10px] text-slate-400 font-mono">{{ selectedBlueprint.variables.length }} options</span>
             </div>
 
             <div
               v-for="v in selectedBlueprint.variables"
               :key="v.envVariable || v.env_variable"
-              class="bg-[#0d1117]/80 border border-slate-800/80 rounded-lg p-3 space-y-1.5"
+              class="bg-surface-deep border border-surface-border rounded-lg p-3 space-y-1.5"
             >
               <div class="flex items-center justify-between">
                 <label class="text-slate-300 font-medium">{{ v.name || v.envVariable || v.env_variable }}</label>
-                <span class="text-[10px] text-amber-500/80 font-mono">{{ v.envVariable || v.env_variable }}</span>
+                <span class="text-[10px] text-primary-light font-mono">{{ v.envVariable || v.env_variable }}</span>
               </div>
               <p v-if="v.description" class="text-[11px] text-slate-400 leading-tight">{{ v.description }}</p>
               <input
                 v-model="serverForm.environment[v.envVariable || v.env_variable]"
                 type="text"
                 :placeholder="String(v.defaultValue ?? v.default_value ?? '')"
-                class="w-full bg-[#161b22] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none font-mono text-xs focus:border-amber-500 transition-colors"
+                class="w-full bg-surface-card border border-surface-border rounded-lg p-2 text-slate-200 outline-none font-mono text-xs focus:border-primary transition-colors"
               />
             </div>
           </div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-800 flex-shrink-0">
-          <button @click="showCreateModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-3 border-t border-surface-border flex-shrink-0">
+          <button @click="showCreateModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createServer" class="px-3.5 py-1.5 text-xs bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg">
+          <button @click="createServer" class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md">
             Deploy Server
           </button>
         </div>

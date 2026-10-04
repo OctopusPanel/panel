@@ -120,8 +120,8 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <h3 class="text-sm font-bold text-white flex items-center">
-          <Clock class="w-4 h-4 text-blue-400 mr-2" />
-          Schedules & Automated Cron Tasks
+          <Clock class="w-4 h-4 text-primary mr-2" />
+          Schedules &amp; Automated Cron Tasks
         </h3>
         <p class="text-xs text-slate-400 mt-0.5">
           Configure recurring cron jobs, automated restarts, world save sequences, and scheduled maintenance tasks.
@@ -130,7 +130,7 @@ onMounted(() => {
 
       <button
         @click="showCreateModal = true"
-        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-500/10"
+        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <Plus class="w-3.5 h-3.5 mr-1.5" />
         New Schedule
@@ -138,17 +138,17 @@ onMounted(() => {
     </div>
 
     <!-- Schedules Table -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-500">
+    <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
         Loading cron task sequences...
       </div>
 
-      <div v-else-if="schedules.length === 0" class="p-12 text-center text-xs text-slate-500">
+      <div v-else-if="schedules.length === 0" class="p-12 text-center text-xs text-slate-400">
         No active automated schedules configured.
       </div>
 
       <table v-else class="w-full text-left text-xs">
-        <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-3 px-4">Schedule Name</th>
             <th class="py-3 px-4">Cron Expression</th>
@@ -158,19 +158,19 @@ onMounted(() => {
             <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60 font-mono">
-          <tr v-for="sched in schedules" :key="sched.id" class="hover:bg-slate-800/30 transition-colors">
+        <tbody class="divide-y divide-surface-border/50 font-mono">
+          <tr v-for="sched in schedules" :key="sched.id" class="hover:bg-surface-elevated/40 transition-colors">
             <!-- Name -->
             <td class="py-3 px-4 text-slate-200 font-sans font-semibold">
               <div class="flex items-center space-x-2">
-                <Clock class="w-4 h-4 text-blue-400 shrink-0" />
+                <Clock class="w-4 h-4 text-primary shrink-0" />
                 <span>{{ sched.name }}</span>
               </div>
             </td>
 
             <!-- Cron -->
-            <td class="py-3 px-4 text-amber-300">
-              <span class="bg-[#0b0f17] px-2 py-0.5 rounded border border-slate-800 text-[11px]">
+            <td class="py-3 px-4 text-primary-light">
+              <span class="bg-surface-deep px-2 py-0.5 rounded border border-surface-border text-[11px]">
                 {{ sched.cron }}
               </span>
             </td>
@@ -181,9 +181,9 @@ onMounted(() => {
                 <span
                   v-for="(task, i) in sched.tasks"
                   :key="task.id"
-                  class="bg-[#0b0f17] text-slate-300 px-2 py-0.5 rounded border border-slate-800 text-[10px] font-mono flex items-center"
+                  class="bg-surface-deep text-slate-300 px-2 py-0.5 rounded border border-surface-border text-[10px] font-mono flex items-center"
                 >
-                  <span class="text-blue-400 mr-1 font-bold">{{ i + 1 }}.</span>
+                  <span class="text-primary mr-1 font-bold">{{ i + 1 }}.</span>
                   {{ task.action }} ({{ task.delaySeconds }}s)
                 </span>
               </div>
@@ -199,9 +199,9 @@ onMounted(() => {
               <button
                 @click="toggleActive(sched)"
                 class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
-                :class="sched.isActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400'"
+                :class="sched.isActive ? 'bg-status-online/15 text-status-online border border-status-online/30' : 'bg-surface-deep text-slate-400 border border-surface-border'"
               >
-                <Play v-if="sched.isActive" class="w-3 h-3 mr-1 fill-emerald-400" />
+                <Play v-if="sched.isActive" class="w-3 h-3 mr-1 fill-status-online" />
                 <Pause v-else class="w-3 h-3 mr-1" />
                 {{ sched.isActive ? 'Active' : 'Paused' }}
               </button>
@@ -211,7 +211,7 @@ onMounted(() => {
             <td class="py-3 px-4 text-right space-x-1.5 font-sans">
               <button
                 @click="deleteSchedule(sched.id)"
-                class="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1.5 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
                 title="Delete Schedule"
               >
                 <Trash2 class="w-3.5 h-3.5" />
@@ -223,37 +223,37 @@ onMounted(() => {
     </div>
 
     <!-- Create Schedule Modal with Sequence Builder -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showCreateModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <h3 class="text-sm font-semibold text-white">Create Automated Schedule</h3>
-          <button @click="showCreateModal = false" class="text-slate-400 hover:text-white">
+          <button @click="showCreateModal = false" class="text-slate-400 hover:text-white transition-colors">
             <X class="w-4 h-4" />
           </button>
         </div>
 
         <!-- Presets -->
         <div>
-          <label class="block text-slate-400 text-xs mb-1 font-medium">Quick Presets:</label>
+          <label class="block text-slate-400 text-xs mb-1.5 font-medium">Quick Presets:</label>
           <div class="flex items-center space-x-2">
             <button
               type="button"
               @click="applyPreset('restart')"
-              class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700/60"
+              class="px-2.5 py-1 text-xs bg-surface-deep hover:bg-surface-elevated text-slate-200 rounded border border-surface-border transition-colors"
             >
               🔄 Daily Restart (04:00 AM)
             </button>
             <button
               type="button"
               @click="applyPreset('backup')"
-              class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700/60"
+              class="px-2.5 py-1 text-xs bg-surface-deep hover:bg-surface-elevated text-slate-200 rounded border border-surface-border transition-colors"
             >
               💾 Hourly Snapshot
             </button>
             <button
               type="button"
               @click="applyPreset('broadcast')"
-              class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700/60"
+              class="px-2.5 py-1 text-xs bg-surface-deep hover:bg-surface-elevated text-slate-200 rounded border border-surface-border transition-colors"
             >
               📢 Every 30m Announcement
             </button>
@@ -267,7 +267,7 @@ onMounted(() => {
               v-model="scheduleName"
               type="text"
               placeholder="e.g. Daily Restart & World Clean"
-              class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors"
             />
           </div>
           <div>
@@ -276,7 +276,7 @@ onMounted(() => {
               v-model="scheduleCron"
               type="text"
               placeholder="0 4 * * *"
-              class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 font-mono outline-none focus:border-primary transition-colors"
             />
           </div>
         </div>
@@ -290,7 +290,7 @@ onMounted(() => {
             <button
               type="button"
               @click="addTask"
-              class="text-xs text-blue-400 hover:text-blue-300 flex items-center font-medium"
+              class="text-xs text-primary-light hover:text-primary flex items-center font-medium transition-colors"
             >
               <Plus class="w-3.5 h-3.5 mr-1" />
               Add Pipeline Step
@@ -300,14 +300,14 @@ onMounted(() => {
           <div
             v-for="(task, index) in scheduleTasks"
             :key="task.id"
-            class="bg-[#0b0f17] border border-slate-800 rounded-lg p-3 space-y-2"
+            class="bg-surface-deep border border-surface-border rounded-lg p-3 space-y-2"
           >
             <div class="flex items-center justify-between text-xs">
               <span class="font-bold text-slate-300 font-mono">Step {{ index + 1 }}</span>
               <button
                 type="button"
                 @click="removeTask(index)"
-                class="text-slate-500 hover:text-rose-400"
+                class="text-slate-500 hover:text-status-offline transition-colors"
               >
                 <Trash2 class="w-3.5 h-3.5" />
               </button>
@@ -315,10 +315,10 @@ onMounted(() => {
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
               <div>
-                <label class="block text-[10px] text-slate-500 mb-0.5">Action Type</label>
+                <label class="block text-[10px] text-slate-400 mb-1">Action Type</label>
                 <select
                   v-model="task.action"
-                  class="w-full bg-[#111622] border border-slate-700 rounded p-1.5 text-slate-200 font-mono text-xs"
+                  class="w-full bg-surface-card border border-surface-border rounded p-2 text-slate-200 font-mono text-xs outline-none focus:border-primary"
                 >
                   <option value="command">Send Console Command</option>
                   <option value="power">Power Action</option>
@@ -327,34 +327,34 @@ onMounted(() => {
               </div>
 
               <div>
-                <label class="block text-[10px] text-slate-500 mb-0.5">Payload / Argument</label>
+                <label class="block text-[10px] text-slate-400 mb-1">Payload / Argument</label>
                 <input
                   v-model="task.payload"
                   type="text"
                   placeholder="e.g. say Warning or restart"
-                  class="w-full bg-[#111622] border border-slate-700 rounded p-1.5 text-slate-200 font-mono text-xs"
+                  class="w-full bg-surface-card border border-surface-border rounded p-2 text-slate-200 font-mono text-xs outline-none focus:border-primary"
                 />
               </div>
 
               <div>
-                <label class="block text-[10px] text-slate-500 mb-0.5">Delay (seconds)</label>
+                <label class="block text-[10px] text-slate-400 mb-1">Delay (seconds)</label>
                 <input
                   v-model.number="task.delaySeconds"
                   type="number"
-                  class="w-full bg-[#111622] border border-slate-700 rounded p-1.5 text-slate-200 font-mono text-xs"
+                  class="w-full bg-surface-card border border-surface-border rounded p-2 text-slate-200 font-mono text-xs outline-none focus:border-primary"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-800">
-          <button @click="showCreateModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-3 border-t border-surface-border">
+          <button @click="showCreateModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             Cancel
           </button>
           <button
             @click="createSchedule"
-            class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg"
+            class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md"
           >
             Save Schedule
           </button>

@@ -154,37 +154,37 @@ const sftpUri = computed(() => `sftp://${sftpUser.value}:${sftpPass.value}@${sft
 </script>
 
 <template>
-  <div class="bg-[#111622] border border-slate-800 rounded-xl p-4 shadow-xl">
+  <div class="bg-surface-card border border-surface-border rounded-xl p-4 shadow-xl">
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
       <!-- 1. CPU Gauge & Sparkline -->
-      <div class="bg-[#0b0f17] border border-slate-800/80 rounded-lg p-3 flex flex-col justify-between">
+      <div class="bg-surface-deep border border-surface-border rounded-lg p-3 flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-1.5">
-          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center">
-            <Cpu class="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center text-primary-light">
+            <Cpu class="w-3.5 h-3.5 mr-1.5 text-primary" />
             CPU Load
           </span>
-          <span class="text-[10px] font-mono font-semibold" :class="cpuPercent > 85 ? 'text-rose-400' : 'text-blue-400'">
+          <span class="text-[10px] font-mono font-semibold" :class="cpuPercent > 85 ? 'text-status-offline' : 'text-primary-light'">
             {{ cpuUsage }}%
           </span>
         </div>
         <div>
           <div class="flex items-baseline justify-between mb-1.5 font-mono">
             <span class="text-xs font-bold text-white">{{ cpuUsage }}%</span>
-            <span class="text-[10px] text-slate-500">/ {{ cpuLimit }}% limit</span>
+            <span class="text-[10px] text-slate-400">/ {{ cpuLimit }}% limit</span>
           </div>
           <!-- Mini Progress Bar & Mini Sparkline -->
-          <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mb-1.5">
+          <div class="w-full bg-surface-base h-1.5 rounded-full overflow-hidden mb-1.5">
             <div
               class="h-full transition-all duration-500 rounded-full"
-              :class="cpuPercent > 85 ? 'bg-rose-500' : cpuPercent > 60 ? 'bg-amber-500' : 'bg-blue-500'"
+              :class="cpuPercent > 85 ? 'bg-status-offline' : cpuPercent > 60 ? 'bg-status-warning' : 'bg-primary'"
               :style="{ width: `${cpuPercent}%` }"
             ></div>
           </div>
-          <div class="flex items-end justify-between h-3 gap-0.5 opacity-60">
+          <div class="flex items-end justify-between h-3 gap-0.5 opacity-70">
             <div
               v-for="(val, idx) in cpuHistory"
               :key="idx"
-              class="flex-1 bg-blue-400 rounded-t-sm"
+              class="flex-1 bg-primary rounded-t-sm"
               :style="{ height: `${Math.max(15, Math.min(100, (val / cpuLimit) * 100))}%` }"
             ></div>
           </div>
@@ -192,119 +192,119 @@ const sftpUri = computed(() => `sftp://${sftpUser.value}:${sftpPass.value}@${sft
       </div>
 
       <!-- 2. RAM Usage -->
-      <div class="bg-[#0b0f17] border border-slate-800/80 rounded-lg p-3 flex flex-col justify-between">
+      <div class="bg-surface-deep border border-surface-border rounded-lg p-3 flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-1.5">
-          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center">
-            <Database class="w-3.5 h-3.5 mr-1.5 text-purple-400" />
+          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center text-metric-memory">
+            <Database class="w-3.5 h-3.5 mr-1.5 text-metric-memory" />
             Memory
           </span>
-          <span class="text-[10px] font-mono text-purple-400 font-semibold">{{ ramPercent }}%</span>
+          <span class="text-[10px] font-mono text-metric-memory font-semibold">{{ ramPercent }}%</span>
         </div>
         <div>
           <div class="flex items-baseline justify-between mb-1.5 font-mono">
             <span class="text-xs font-bold text-white">{{ formatBytes(ramBytes) }}</span>
-            <span class="text-[10px] text-slate-500">/ {{ formatBytes(maxRamBytes) }}</span>
+            <span class="text-[10px] text-slate-400">/ {{ formatBytes(maxRamBytes) }}</span>
           </div>
-          <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden">
+          <div class="w-full bg-surface-base h-1.5 rounded-full overflow-hidden">
             <div
               class="h-full transition-all duration-500 rounded-full"
-              :class="ramPercent > 90 ? 'bg-rose-500' : ramPercent > 75 ? 'bg-amber-500' : 'bg-purple-500'"
+              :class="ramPercent > 90 ? 'bg-status-offline' : ramPercent > 75 ? 'bg-status-warning' : 'bg-metric-memory'"
               :style="{ width: `${ramPercent}%` }"
             ></div>
           </div>
-          <span class="text-[10px] text-slate-500 font-mono mt-1.5 block">
+          <span class="text-[10px] text-slate-400 font-mono mt-1.5 block">
             {{ formatBytes(maxRamBytes - ramBytes) }} free
           </span>
         </div>
       </div>
 
       <!-- 3. Disk Space -->
-      <div class="bg-[#0b0f17] border border-slate-800/80 rounded-lg p-3 flex flex-col justify-between">
+      <div class="bg-surface-deep border border-surface-border rounded-lg p-3 flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-1.5">
-          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center">
-            <HardDrive class="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center text-status-online">
+            <HardDrive class="w-3.5 h-3.5 mr-1.5 text-status-online" />
             Disk Space
           </span>
-          <span class="text-[10px] font-mono text-emerald-400 font-semibold">{{ diskPercent }}%</span>
+          <span class="text-[10px] font-mono text-status-online font-semibold">{{ diskPercent }}%</span>
         </div>
         <div>
           <div class="flex items-baseline justify-between mb-1.5 font-mono">
             <span class="text-xs font-bold text-white">{{ formatBytes(diskBytes) }}</span>
-            <span class="text-[10px] text-slate-500">/ {{ formatBytes(maxDiskBytes) }}</span>
+            <span class="text-[10px] text-slate-400">/ {{ formatBytes(maxDiskBytes) }}</span>
           </div>
-          <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden">
+          <div class="w-full bg-surface-base h-1.5 rounded-full overflow-hidden">
             <div
-              class="h-full transition-all duration-500 rounded-full bg-emerald-500"
+              class="h-full transition-all duration-500 rounded-full bg-status-online"
               :style="{ width: `${diskPercent}%` }"
             ></div>
           </div>
-          <span class="text-[10px] text-slate-500 font-mono mt-1.5 block">
+          <span class="text-[10px] text-slate-400 font-mono mt-1.5 block">
             NVMe SSD Pool
           </span>
         </div>
       </div>
 
       <!-- 4. Network Traffic (RX / TX) -->
-      <div class="bg-[#0b0f17] border border-slate-800/80 rounded-lg p-3 flex flex-col justify-between">
+      <div class="bg-surface-deep border border-surface-border rounded-lg p-3 flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-1.5">
-          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center">
-            <Activity class="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
+          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center text-metric-network">
+            <Activity class="w-3.5 h-3.5 mr-1.5 text-metric-network" />
             Network I/O
           </span>
-          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+          <span class="w-2 h-2 rounded-full bg-metric-network animate-pulse"></span>
         </div>
         <div class="font-mono text-xs space-y-1">
           <div class="flex items-center justify-between">
             <span class="text-slate-400 text-[10px]">RX:</span>
-            <span class="text-cyan-300 font-semibold">{{ formatBytes(rxBytes) }}</span>
+            <span class="text-metric-network font-semibold">{{ formatBytes(rxBytes) }}</span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-slate-400 text-[10px]">TX:</span>
-            <span class="text-emerald-300 font-semibold">{{ formatBytes(txBytes) }}</span>
+            <span class="text-status-online font-semibold">{{ formatBytes(txBytes) }}</span>
           </div>
-          <div class="pt-0.5 text-[9px] text-slate-500 truncate">
+          <div class="pt-0.5 text-[9px] text-slate-400 truncate">
             {{ server?.allocation?.ipAddress }}:{{ server?.allocation?.port }}
           </div>
         </div>
       </div>
 
       <!-- 5. Uptime Duration -->
-      <div class="bg-[#0b0f17] border border-slate-800/80 rounded-lg p-3 flex flex-col justify-between">
+      <div class="bg-surface-deep border border-surface-border rounded-lg p-3 flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-1.5">
-          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center">
-            <Clock class="w-3.5 h-3.5 mr-1.5 text-amber-400" />
+          <span class="text-[11px] font-medium uppercase tracking-wider flex items-center text-primary-light">
+            <Clock class="w-3.5 h-3.5 mr-1.5 text-primary" />
             Live Uptime
           </span>
           <span
             class="text-[9px] px-1.5 py-0.5 rounded font-mono font-medium"
-            :class="server?.status === 'running' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400'"
+            :class="server?.status === 'running' ? 'bg-status-online/15 text-status-online border border-status-online/30' : 'bg-surface-base text-slate-400 border border-surface-border'"
           >
             {{ server?.status?.toUpperCase() }}
           </span>
         </div>
         <div class="font-mono">
           <span class="text-sm font-bold text-white block">{{ formatUptime(uptimeSecs) }}</span>
-          <span class="text-[10px] text-slate-500 mt-1 block">
+          <span class="text-[10px] text-slate-400 mt-1 block">
             Node: {{ server?.node?.name || 'Local Node' }}
           </span>
         </div>
       </div>
 
       <!-- 6. SFTP Quick Connect CTA -->
-      <div class="bg-gradient-to-br from-[#161b22] to-[#121722] border border-blue-500/30 rounded-lg p-3 flex flex-col justify-between hover:border-blue-500/50 transition-all">
-        <div class="flex items-center justify-between text-blue-400 mb-1.5">
+      <div class="bg-surface-deep border border-primary/30 rounded-lg p-3 flex flex-col justify-between hover:border-primary/60 transition-all">
+        <div class="flex items-center justify-between text-primary-light mb-1.5">
           <span class="text-[11px] font-semibold uppercase tracking-wider flex items-center">
-            <Terminal class="w-3.5 h-3.5 mr-1.5" />
+            <Terminal class="w-3.5 h-3.5 mr-1.5 text-primary" />
             SFTP Access
           </span>
-          <span class="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-mono">Port {{ sftpPort }}</span>
+          <span class="text-[10px] bg-primary/20 text-primary-light px-1.5 py-0.5 rounded font-mono">Port {{ sftpPort }}</span>
         </div>
         <p class="text-[10px] text-slate-300 line-clamp-1">
           Direct FileZilla / WinSCP credentials
         </p>
         <button
           @click="showSftpModal = true"
-          class="mt-2 w-full py-1.5 px-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-semibold flex items-center justify-center transition-colors shadow-lg shadow-blue-500/10"
+          class="mt-2 w-full py-1.5 px-2 bg-primary hover:bg-primary-dark text-slate-950 rounded text-xs font-semibold flex items-center justify-center transition-all shadow-md active:scale-[0.98]"
         >
           <ExternalLink class="w-3.5 h-3.5 mr-1.5" />
           SFTP Quick Connect
@@ -313,11 +313,11 @@ const sftpUri = computed(() => `sftp://${sftpUser.value}:${sftpPass.value}@${sft
     </div>
 
     <!-- SFTP Quick Connect Modal -->
-    <div v-if="showSftpModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-lg shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showSftpModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <div class="flex items-center space-x-2">
-            <Terminal class="w-5 h-5 text-blue-400" />
+            <Terminal class="w-5 h-5 text-primary" />
             <h3 class="text-sm font-bold text-white">SFTP Direct File Transfer</h3>
           </div>
           <button @click="showSftpModal = false" class="text-slate-400 hover:text-white transition-colors">
@@ -331,54 +331,54 @@ const sftpUri = computed(() => `sftp://${sftpUser.value}:${sftpPass.value}@${sft
 
         <div class="space-y-2.5 text-xs font-mono">
           <!-- Host -->
-          <div class="bg-[#0b0f17] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
+          <div class="bg-surface-deep border border-surface-border rounded-lg p-2.5 flex items-center justify-between">
             <div>
-              <span class="text-[10px] uppercase text-slate-500 block">Server Host / FQDN</span>
+              <span class="text-[10px] uppercase text-slate-400 block font-sans">Server Host / FQDN</span>
               <span class="text-slate-200 select-all">{{ sftpHost }}</span>
             </div>
             <button
               @click="copyText(sftpHost, 'host')"
-              class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+              class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-surface-elevated transition-colors"
             >
-              <Check v-if="copiedField === 'host'" class="w-4 h-4 text-emerald-400" />
+              <Check v-if="copiedField === 'host'" class="w-4 h-4 text-status-online" />
               <Copy v-else class="w-4 h-4" />
             </button>
           </div>
 
           <!-- Port -->
-          <div class="bg-[#0b0f17] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
+          <div class="bg-surface-deep border border-surface-border rounded-lg p-2.5 flex items-center justify-between">
             <div>
-              <span class="text-[10px] uppercase text-slate-500 block">SFTP Port</span>
+              <span class="text-[10px] uppercase text-slate-400 block font-sans">SFTP Port</span>
               <span class="text-slate-200 select-all">{{ sftpPort }}</span>
             </div>
             <button
               @click="copyText(String(sftpPort), 'port')"
-              class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+              class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-surface-elevated transition-colors"
             >
-              <Check v-if="copiedField === 'port'" class="w-4 h-4 text-emerald-400" />
+              <Check v-if="copiedField === 'port'" class="w-4 h-4 text-status-online" />
               <Copy v-else class="w-4 h-4" />
             </button>
           </div>
 
           <!-- Username -->
-          <div class="bg-[#0b0f17] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
+          <div class="bg-surface-deep border border-surface-border rounded-lg p-2.5 flex items-center justify-between">
             <div>
-              <span class="text-[10px] uppercase text-slate-500 block">Username</span>
+              <span class="text-[10px] uppercase text-slate-400 block font-sans">Username</span>
               <span class="text-slate-200 select-all">{{ sftpUser }}</span>
             </div>
             <button
               @click="copyText(sftpUser, 'user')"
-              class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+              class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-surface-elevated transition-colors"
             >
-              <Check v-if="copiedField === 'user'" class="w-4 h-4 text-emerald-400" />
+              <Check v-if="copiedField === 'user'" class="w-4 h-4 text-status-online" />
               <Copy v-else class="w-4 h-4" />
             </button>
           </div>
 
           <!-- Password -->
-          <div class="bg-[#0b0f17] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
+          <div class="bg-surface-deep border border-surface-border rounded-lg p-2.5 flex items-center justify-between">
             <div>
-              <span class="text-[10px] uppercase text-slate-500 block">Password</span>
+              <span class="text-[10px] uppercase text-slate-400 block font-sans">Password</span>
               <span class="text-slate-200 select-all font-mono">
                 {{ showPassword ? sftpPass : '••••••••••••••••' }}
               </span>
@@ -386,30 +386,30 @@ const sftpUri = computed(() => `sftp://${sftpUser.value}:${sftpPass.value}@${sft
             <div class="flex items-center space-x-1">
               <button
                 @click="showPassword = !showPassword"
-                class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+                class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-surface-elevated transition-colors"
               >
                 <EyeOff v-if="showPassword" class="w-4 h-4" />
                 <Eye v-else class="w-4 h-4" />
               </button>
               <button
                 @click="copyText(sftpPass, 'pass')"
-                class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+                class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-surface-elevated transition-colors"
               >
-                <Check v-if="copiedField === 'pass'" class="w-4 h-4 text-emerald-400" />
+                <Check v-if="copiedField === 'pass'" class="w-4 h-4 text-status-online" />
                 <Copy v-else class="w-4 h-4" />
               </button>
             </div>
           </div>
 
           <!-- 1-Click Connection String -->
-          <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2.5 flex items-center justify-between mt-3">
+          <div class="bg-primary/10 border border-primary/25 rounded-lg p-2.5 flex items-center justify-between mt-3">
             <div class="truncate mr-2">
-              <span class="text-[10px] uppercase text-blue-400 block font-sans">Full SFTP URI (WinSCP / FileZilla)</span>
-              <span class="text-blue-200 text-[11px] truncate block select-all">{{ sftpUri }}</span>
+              <span class="text-[10px] uppercase text-primary-light block font-sans">Full SFTP URI (WinSCP / FileZilla)</span>
+              <span class="text-slate-200 text-[11px] truncate block select-all">{{ sftpUri }}</span>
             </div>
             <button
               @click="copyText(sftpUri, 'uri')"
-              class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs shrink-0 flex items-center transition-colors"
+              class="px-2.5 py-1 bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded text-xs shrink-0 flex items-center transition-all shadow-sm active:scale-[0.98]"
             >
               <Check v-if="copiedField === 'uri'" class="w-3.5 h-3.5 mr-1" />
               <Copy v-else class="w-3.5 h-3.5 mr-1" />
@@ -421,7 +421,7 @@ const sftpUri = computed(() => `sftp://${sftpUser.value}:${sftpPass.value}@${sft
         <div class="flex justify-end pt-2">
           <button
             @click="showSftpModal = false"
-            class="px-4 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors"
+            class="px-4 py-1.5 text-xs bg-surface-elevated hover:bg-surface-border text-slate-200 rounded-lg transition-colors"
           >
             Close
           </button>
