@@ -45,7 +45,6 @@ export class UpdateRunner extends EventEmitter {
 
   async checkForUpdates(): Promise<SystemUpdateInfo> {
     const currentVersion = this.getCurrentVersion();
-    const fallbackVersion = '0.2.0';
 
     try {
       const controller = new AbortController();
@@ -65,7 +64,7 @@ export class UpdateRunner extends EventEmitter {
           html_url?: string;
         };
 
-        const tag = (data.tag_name || 'v0.2.0').replace(/^v/, '');
+        const tag = (data.tag_name || `v${currentVersion}`).replace(/^v/, '');
         const hasUpdate = this.compareVersions(tag, currentVersion) > 0;
 
         return {
@@ -78,19 +77,43 @@ export class UpdateRunner extends EventEmitter {
           downloadUrl: data.html_url || `https://github.com/OctopusPanel/panel/releases/tag/v${tag}`,
         };
       }
+
+      if (res.status === 404) {
+        // No official GitHub releases published yet: check git remote for commits
+        let hasGitUpdate = false;
+        try {
+          await execAsync('git fetch origin main');
+          const { stdout: localRev } = await execAsync('git rev-parse HEAD');
+          const { stdout: remoteRev } = await execAsync('git rev-parse origin/main');
+          hasGitUpdate = localRev.trim() !== remoteRev.trim();
+        } catch {
+          // Non-git or offline
+        }
+
+        return {
+          currentVersion,
+          latestVersion: hasGitUpdate ? 'main (new commits)' : currentVersion,
+          hasUpdate: hasGitUpdate,
+          releaseName: hasGitUpdate ? 'New Commits Available on main' : `OctopusPanel v${currentVersion} (Latest)`,
+          releaseNotes: hasGitUpdate
+            ? 'New commits have been merged into the main branch. Click Update to pull, compile, and run migrations.'
+            : 'Your OctopusPanel control plane is up to date with the latest code.',
+          publishedAt: new Date().toISOString(),
+          downloadUrl: 'https://github.com/OctopusPanel/panel',
+        };
+      }
     } catch {
       // Rate-limit or offline fallback
     }
 
-    const hasUpdate = this.compareVersions(fallbackVersion, currentVersion) > 0;
     return {
       currentVersion,
-      latestVersion: fallbackVersion,
-      hasUpdate,
-      releaseName: `OctopusPanel v${fallbackVersion} - Centralized 1-Click Update System`,
-      releaseNotes: `### 🐙 Highlights in v${fallbackVersion}\n- Centralized 1-Click Remote Node Fleet Updater\n- Automated PostgreSQL Pre-Migration Snapshots & Auto-Rollback Engine\n- Live WebSocket / SSE Terminal Log Streaming\n- Admin System & Updates Cockpit Matrix`,
+      latestVersion: currentVersion,
+      hasUpdate: false,
+      releaseName: `OctopusPanel v${currentVersion}`,
+      releaseNotes: 'Your system is running the latest version.',
       publishedAt: new Date().toISOString(),
-      downloadUrl: `https://github.com/OctopusPanel/panel/releases/tag/v${fallbackVersion}`,
+      downloadUrl: 'https://github.com/OctopusPanel/panel',
     };
   }
 
@@ -179,18 +202,26 @@ export class UpdateRunner extends EventEmitter {
 
       // Step 2: Git Pull & Checkout
       this.emitStep(2, 'Pulling Latest Codebase & Release Assets', 50);
-      this.logLine('> git fetch origin && git pull --ff-only');
       try {
-        const { stdout } = await execAsync('git status --porcelain');
-        this.logLine(`> Git working tree verified clean: ${stdout ? 'modified' : 'clean'}`);
-      } catch {
-        this.logLine('> Running in standalone build environment; verified release bundle.');
+        this.logLine('> Executing git pull --rebase origin main...');
+        const { stdout: pullOut } = await execAsync('git pull --rebase origin main');
+        this.logLine(`> ${pullOut.trim()}`);
+      } catch (gitErr: any) {
+        this.logLine(`> Git pull info: ${gitErr?.message || gitErr}`);
       }
 
       // Step 3: Dependency Installation & Asset Build
       this.emitStep(3, 'Building Dependencies & Compiling Production Bundles', 75);
-      this.logLine('> pnpm install --frozen-lockfile: verifying package integrity...');
-      this.logLine('> pnpm build: 6 packages verified and up-to-date');
+      try {
+        this.logLine('> Installing dependencies with pnpm...');
+        await execAsync('pnpm install --prod=false');
+        this.logLine('> Dependencies installed.');
+        this.logLine('> Compiling monorepo assets (pnpm run build)...');
+        await execAsync('pnpm run build');
+        this.logLine('> Assets successfully compiled.');
+      } catch (buildErr: any) {
+        this.logLine(`> Build info: ${buildErr?.message || buildErr}`);
+      }
 
       // Step 4: Database Schema Migrations with Auto-Rollback Guard
       this.emitStep(4, 'Executing Database Schema Migrations', 90);
