@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { ApiService } from '../services/api.js';
 import { useServerStore } from '../stores/server.js';
 import TelemetryDeck from '../components/cockpit/TelemetryDeck.vue';
 import CockpitConsoleTab from '../components/cockpit/CockpitConsoleTab.vue';
@@ -63,6 +64,58 @@ const serverUuid = String(route.params.id);
 
 onMounted(async () => {
   await serverStore.fetchServerDetails(serverUuid);
+  initTelemetrySocket();
+});
+
+let telemetrySocket: WebSocket | null = null;
+
+async function initTelemetrySocket() {
+  if (ApiService.isDemoMode()) return;
+  try {
+    const res = await ApiService.get<{ token: string; socketUrl: string }>(
+      `/client/servers/${serverUuid}/ws-token`,
+    );
+    const wsUrl = `${res.socketUrl}?token=${res.token}`;
+    telemetrySocket = new WebSocket(wsUrl);
+
+    telemetrySocket.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        const eventName = parsed.event || parsed.type;
+        const eventData = parsed.data !== undefined ? parsed.data : (Array.isArray(parsed.args) ? parsed.args[0] : parsed.args);
+
+        if (eventName === 'stats' && (eventData || parsed.args?.[0])) {
+          const stats = (eventData || parsed.args?.[0]) as any;
+          if (serverStore.currentServer && stats) {
+            serverStore.currentServer.metrics = {
+              cpuCurrent: stats.cpu_absolute ?? stats.cpuAbsolute ?? stats.cpu_usage_pct ?? stats.cpu_percentage ?? 0,
+              memoryCurrentBytes: stats.memory_bytes ?? stats.memoryBytes ?? 0,
+              diskCurrentBytes: stats.disk_bytes ?? stats.diskBytes ?? ((stats.disk_read_bytes || 0) + (stats.disk_write_bytes || 0)),
+              networkRxBytes: stats.network?.rx_bytes ?? stats.networkRxBytes ?? stats.network_rx_bytes ?? 0,
+              networkTxBytes: stats.network?.tx_bytes ?? stats.networkTxBytes ?? stats.network_tx_bytes ?? 0,
+              uptimeSeconds: stats.uptime ?? (stats.uptimeMs ? Math.floor(stats.uptimeMs / 1000) : 0),
+            };
+          }
+        } else if (eventName === 'status' && (eventData !== undefined || parsed.args?.[0])) {
+          const newStatus = String(eventData ?? parsed.args?.[0]);
+          if (serverStore.currentServer && newStatus) {
+            serverStore.currentServer.status = newStatus.toLowerCase();
+          }
+        }
+      } catch {}
+    };
+
+    telemetrySocket.onclose = () => {
+      telemetrySocket = null;
+    };
+  } catch {}
+}
+
+onBeforeUnmount(() => {
+  if (telemetrySocket) {
+    telemetrySocket.close();
+    telemetrySocket = null;
+  }
 });
 
 async function handlePower(action: PowerAction) {
