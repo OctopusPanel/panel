@@ -945,6 +945,15 @@ configure_caddy() {
     fi
 
     mkdir -p "$(dirname "${CADDYFILE_PATH}")" /var/log/caddy 2>/dev/null || true
+    if id -u caddy &>/dev/null; then
+        chown -R caddy:caddy /var/log/caddy 2>/dev/null || true
+        chown -R caddy:caddy "$(dirname "${CADDYFILE_PATH}")" 2>/dev/null || true
+    fi
+    chmod 0755 /var/log/caddy 2>/dev/null || true
+
+    # Remove default distribution placeholder welcome page
+    rm -f /usr/share/caddy/index.html /var/www/html/index.html 2>/dev/null || true
+
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Generating ${CADDYFILE_PATH} for domain: ${PANEL_DOMAIN}" >> "${LOG_FILE}"
 
     cat > "${CADDYFILE_PATH}" <<EOF
@@ -968,8 +977,17 @@ ${PANEL_DOMAIN} {
 }
 EOF
 
+    if id -u caddy &>/dev/null; then
+        chown caddy:caddy "${CADDYFILE_PATH}" 2>/dev/null || true
+    fi
+    chmod 0644 "${CADDYFILE_PATH}" 2>/dev/null || true
+
     if command -v systemctl &>/dev/null; then
-        systemctl enable --now caddy || systemctl restart caddy || true
+        systemctl daemon-reload
+        systemctl enable caddy
+        systemctl restart caddy
+    elif command -v caddy &>/dev/null; then
+        caddy reload --config "${CADDYFILE_PATH}" 2>/dev/null || caddy start --config "${CADDYFILE_PATH}" 2>/dev/null || true
     fi
 }
 
