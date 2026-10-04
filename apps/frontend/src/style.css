@@ -4,21 +4,21 @@
 
 :root {
   color-scheme: dark;
-  --background: 225 4% 21%;
+  --background: 228 19% 6%;
   --foreground: 220 14% 96%;
-  --card: 228 4% 25%;
+  --card: 229 24% 10%;
   --card-foreground: 220 14% 96%;
-  --primary: 37 72% 51%;
+  --primary: 38 72% 51%;
   --primary-foreground: 0 0% 100%;
-  --border: 232 4% 36%;
-  --input: 228 4% 25%;
-  --ring: 37 72% 51%;
+  --border: 226 20% 17%;
+  --input: 227 23% 13%;
+  --ring: 38 72% 51%;
 }
 
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: #343538;
+  background-color: #0c0d12;
   color: #f3f4f6;
   min-height: 100vh;
 }
@@ -30,16 +30,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #27282b;
+  background: #08090d;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #494a50;
+  background: #1a1d2b;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #585960;
+  background: #222634;
 }
 
 /* Tab and view motion transitions */

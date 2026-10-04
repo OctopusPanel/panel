@@ -4,8 +4,7 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { useI18n } from 'vue-i18n';
 import { ApiService } from '../../services/api.js';
-import { Terminal as TerminalIcon, Send, RotateCcw, Power, Square } from 'lucide-vue-next';
-import { PowerAction } from '@octopus/shared';
+import { Terminal as TerminalIcon, Send } from 'lucide-vue-next';
 import { useServerStore } from '../../stores/server.js';
 
 const props = defineProps<{
@@ -165,20 +164,6 @@ function sendCommand() {
   commandInput.value = '';
 }
 
-async function handlePower(action: PowerAction) {
-  try {
-    await serverStore.sendPowerAction(props.serverUuid, action);
-    term?.writeln(`\x1b[33m[OctopusPanel] Power action '${action}' triggered.\x1b[0m`);
-    if (action === PowerAction.START && (!socket || socket.readyState !== WebSocket.OPEN)) {
-      setTimeout(() => {
-        connectSocket();
-      }, 1200);
-    }
-  } catch (err: any) {
-    const errText = err?.params?.error || err?.message || err?.code || (typeof err === 'object' ? JSON.stringify(err) : String(err));
-    term?.writeln(`\x1b[31m[Power Error] ${errText}\x1b[0m`);
-  }
-}
 
 function clearConsole() {
   term?.clear();
@@ -228,29 +213,7 @@ onBeforeUnmount(() => {
         </span>
       </div>
 
-      <!-- Power Quick Buttons -->
-      <div class="flex items-center space-x-2">
-        <button
-          @click="handlePower(PowerAction.START)"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-status-online hover:bg-emerald-500 text-black font-semibold transition-colors"
-        >
-          <Power class="w-3 h-3 mr-1" />
-          {{ t('servers.start') }}
-        </button>
-        <button
-          @click="handlePower(PowerAction.RESTART)"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-primary hover:bg-primary-dark text-black font-semibold transition-colors"
-        >
-          <RotateCcw class="w-3 h-3 mr-1" />
-          {{ t('servers.restart') }}
-        </button>
-        <button
-          @click="handlePower(PowerAction.STOP)"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-rose-700 hover:bg-rose-600 text-white transition-colors"
-        >
-          <Square class="w-3 h-3 mr-1" />
-          {{ t('servers.stop') }}
-        </button>
+
         <button
           @click="clearConsole"
           class="px-2 py-1 text-xs text-slate-400 hover:text-slate-200 border border-surface-border rounded-lg hover:bg-surface-elevated transition-colors"

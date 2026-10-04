@@ -2,10 +2,8 @@
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { useI18n } from 'vue-i18n';
 import { ApiService } from '../../services/api.js';
-import { Terminal as TerminalIcon, Send, RotateCcw, Power, Square, Maximize2, Minimize2, Trash2, Skull, AlertTriangle, X } from 'lucide-vue-next';
-import { PowerAction } from '@octopus/shared';
+import { Terminal as TerminalIcon, Send, Maximize2, Minimize2, Trash2 } from 'lucide-vue-next';
 import { useServerStore } from '../../stores/server.js';
 import { mapDaemonStats } from '../../utils/telemetry.js';
 
@@ -13,14 +11,12 @@ const props = defineProps<{
   serverUuid: string;
 }>();
 
-const { t } = useI18n();
 const serverStore = useServerStore();
 
 const terminalContainer = ref<HTMLDivElement | null>(null);
 const commandInput = ref('');
 const isConnected = ref(false);
 const isFullscreen = ref(false);
-const showKillModal = ref(false);
 
 // Command history
 const commandHistory = ref<string[]>([]);
@@ -211,25 +207,6 @@ function navigateHistory(direction: 'up' | 'down') {
   commandInput.value = historyIndex.value === -1 ? '' : commandHistory.value[historyIndex.value];
 }
 
-async function handlePower(action: PowerAction) {
-  try {
-    await serverStore.sendPowerAction(props.serverUuid, action);
-    term?.writeln(`\x1b[33m[OctopusPanel] Power action '${action}' triggered.\x1b[0m`);
-    if (action === PowerAction.START && (!socket || socket.readyState !== WebSocket.OPEN)) {
-      setTimeout(() => {
-        connectSocket();
-      }, 1200);
-    }
-  } catch (err: any) {
-    const errText = err?.params?.error || err?.message || err?.code || (typeof err === 'object' ? JSON.stringify(err) : String(err));
-    term?.writeln(`\x1b[31m[Power Error] ${errText}\x1b[0m`);
-  }
-}
-
-function confirmKill() {
-  showKillModal.value = false;
-  handlePower(PowerAction.KILL);
-}
 
 function clearConsole() {
   term?.clear();
@@ -292,38 +269,6 @@ onBeforeUnmount(() => {
 
       <!-- Action Buttons -->
       <div class="flex items-center space-x-2">
-        <!-- Power Action Bar (Tactile) -->
-        <button
-          @click="handlePower(PowerAction.START)"
-          class="flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg bg-status-online hover:bg-emerald-600 text-slate-950 transition-all active:scale-[0.98]"
-        >
-          <Power class="w-3.5 h-3.5 mr-1" />
-          {{ t('servers.start') }}
-        </button>
-        <button
-          @click="handlePower(PowerAction.RESTART)"
-          class="flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all active:scale-[0.98]"
-        >
-          <RotateCcw class="w-3.5 h-3.5 mr-1" />
-          {{ t('servers.restart') }}
-        </button>
-        <button
-          @click="handlePower(PowerAction.STOP)"
-          class="flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg bg-status-offline hover:bg-rose-600 text-slate-950 transition-all active:scale-[0.98]"
-        >
-          <Square class="w-3.5 h-3.5 mr-1" />
-          {{ t('servers.stop') }}
-        </button>
-        <button
-          @click="showKillModal = true"
-          class="flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg border border-status-offline/40 text-status-offline hover:bg-status-offline/10 transition-all active:scale-[0.98]"
-          title="Force Kill (SIGKILL)"
-        >
-          <Skull class="w-3.5 h-3.5 mr-1" />
-          Kill
-        </button>
-
-        <div class="h-4 w-px bg-surface-border mx-1"></div>
 
         <button
           @click="clearConsole"
@@ -380,34 +325,7 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <!-- Force Kill Confirmation Modal -->
-    <div v-if="showKillModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-surface-card border border-status-offline/50 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
-          <div class="flex items-center space-x-2 text-status-offline">
-            <AlertTriangle class="w-5 h-5" />
-            <h3 class="text-sm font-bold text-white">Confirm Force Kill</h3>
-          </div>
-          <button @click="showKillModal = false" class="text-slate-400 hover:text-white">
-            <X class="w-4 h-4" />
-          </button>
-        </div>
 
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Sending a SIGKILL immediately aborts the container process without graceful shutdown. Unsaved world data or database transactions might be lost or corrupted.
-        </p>
-
-        <div class="flex justify-end space-x-2 pt-3 border-t border-surface-border">
-          <button @click="showKillModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
-            Cancel
-          </button>
-          <button @click="confirmKill" class="px-3.5 py-1.5 text-xs bg-status-offline hover:bg-rose-600 text-slate-950 font-semibold rounded-lg flex items-center active:scale-[0.98]">
-            <Skull class="w-3.5 h-3.5 mr-1.5" />
-            Force Kill Now
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
