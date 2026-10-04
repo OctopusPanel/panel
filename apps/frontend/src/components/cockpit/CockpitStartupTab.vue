@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { ApiService } from '../../services/api.js';
 import { Rocket, Save, Check, RefreshCw, AlertCircle, Terminal, HelpCircle } from 'lucide-vue-next';
 import { EggVariable } from '../../services/demo-data.js';
+import ButtonSpinner from '../ui/ButtonSpinner.vue';
 
 const props = defineProps<{
   serverUuid: string;
@@ -90,15 +91,16 @@ onMounted(() => {
         </p>
       </div>
 
-      <button
+      <ButtonSpinner
         @click="saveVariables"
-        :disabled="isSaving"
+        :loading="isSaving"
+        spinner-color="white"
         class="flex items-center px-4 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <Check v-if="saveSuccess" class="w-3.5 h-3.5 mr-1.5 text-slate-950" />
         <Save v-else class="w-3.5 h-3.5 mr-1.5" />
         {{ saveSuccess ? 'Saved & Rehashed!' : 'Save Variables & Rehash' }}
-      </button>
+      </ButtonSpinner>
     </div>
 
     <!-- Restart Notice Banner -->

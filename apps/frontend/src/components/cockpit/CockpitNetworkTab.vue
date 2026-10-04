@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { ApiService } from '../../services/api.js';
 import { Globe, Plus, Copy, Check, Star, Trash2, Edit2, Shield, X, Radio } from 'lucide-vue-next';
+import ButtonSpinner from '../ui/ButtonSpinner.vue';
 
 const props = defineProps<{
   serverUuid: string;
@@ -10,6 +11,10 @@ const props = defineProps<{
 const allocations = ref<any[]>([]);
 const isLoading = ref(false);
 const copiedField = ref<string | null>(null);
+const isRequesting = ref(false);
+const isSavingAlias = ref(false);
+const deletingAllocId = ref<number | null>(null);
+const settingPrimaryId = ref<number | null>(null);
 
 // Modal states
 const showRequestModal = ref(false);
@@ -32,24 +37,30 @@ async function loadAllocations() {
 }
 
 async function requestPort() {
+  isRequesting.value = true;
   try {
     await ApiService.post(`/client/servers/${props.serverUuid}/allocations`, {
       note: requestNote.value || 'Additional Port',
     });
     showRequestModal.value = false;
     requestNote.value = '';
-    loadAllocations();
+    await loadAllocations();
   } catch (err) {
     console.error('Failed to request port:', err);
+  } finally {
+    isRequesting.value = false;
   }
 }
 
 async function setPrimary(allocId: number) {
+  settingPrimaryId.value = allocId;
   try {
     await ApiService.post(`/client/servers/${props.serverUuid}/allocations/${allocId}/primary`);
-    loadAllocations();
+    await loadAllocations();
   } catch (err) {
     console.error('Failed to set primary port:', err);
+  } finally {
+    settingPrimaryId.value = null;
   }
 }
 
@@ -62,25 +73,31 @@ function openAliasModal(alloc: any) {
 
 async function saveAlias() {
   if (!selectedAllocation.value) return;
+  isSavingAlias.value = true;
   try {
     await ApiService.post(`/client/servers/${props.serverUuid}/allocations/${selectedAllocation.value.id}/alias`, {
       alias: aliasInput.value.trim() || null,
       note: noteInput.value.trim() || null,
     });
     showAliasModal.value = false;
-    loadAllocations();
+    await loadAllocations();
   } catch (err) {
     console.error('Failed to update alias:', err);
+  } finally {
+    isSavingAlias.value = false;
   }
 }
 
 async function deleteAllocation(allocId: number) {
   if (!confirm('Are you sure you want to release this port allocation?')) return;
+  deletingAllocId.value = allocId;
   try {
     await ApiService.delete(`/client/servers/${props.serverUuid}/allocations/${allocId}`);
-    loadAllocations();
+    await loadAllocations();
   } catch (err) {
     console.error('Failed to delete allocation:', err);
+  } finally {
+    deletingAllocId.value = null;
   }
 }
 
@@ -185,14 +202,16 @@ onMounted(() => {
 
             <!-- Actions -->
             <td class="py-3 px-4 text-right space-x-1.5 font-sans">
-              <button
+              <ButtonSpinner
                 v-if="!alloc.isPrimary"
+                :loading="settingPrimaryId === alloc.id"
+                spinner-color="muted"
                 @click="setPrimary(alloc.id)"
                 class="px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:text-white border border-surface-border hover:bg-surface-elevated rounded transition-colors"
                 title="Make Primary Game Port"
               >
                 Set Primary
-              </button>
+              </ButtonSpinner>
               <button
                 @click="openAliasModal(alloc)"
                 class="p-1 text-slate-400 hover:text-primary rounded hover:bg-surface-elevated transition-colors"
@@ -200,14 +219,16 @@ onMounted(() => {
               >
                 <Edit2 class="w-3.5 h-3.5" />
               </button>
-              <button
+              <ButtonSpinner
                 v-if="!alloc.isPrimary"
+                :loading="deletingAllocId === alloc.id"
+                spinner-color="muted"
                 @click="deleteAllocation(alloc.id)"
                 class="p-1 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
                 title="Delete Allocation"
               >
                 <Trash2 class="w-3.5 h-3.5" />
-              </button>
+              </ButtonSpinner>
             </td>
           </tr>
         </tbody>
@@ -242,9 +263,14 @@ onMounted(() => {
           <button @click="showRequestModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="requestPort" class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]">
+          <ButtonSpinner
+            @click="requestPort"
+            :loading="isRequesting"
+            spinner-color="white"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg shadow-md active:scale-[0.98]"
+          >
             Confirm &amp; Allocate
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>
@@ -285,9 +311,14 @@ onMounted(() => {
           <button @click="showAliasModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="saveAlias" class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]">
+          <ButtonSpinner
+            @click="saveAlias"
+            :loading="isSavingAlias"
+            spinner-color="white"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg shadow-md active:scale-[0.98]"
+          >
             Save Settings
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>

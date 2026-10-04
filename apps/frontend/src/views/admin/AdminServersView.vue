@@ -3,6 +3,8 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiService } from '../../services/api.js';
 import { Server, Plus, Trash2, Ban, Play, X } from 'lucide-vue-next';
+import SkeletonTable from '../../components/ui/SkeletonTable.vue';
+import ButtonSpinner from '../../components/ui/ButtonSpinner.vue';
 
 const { t } = useI18n();
 
@@ -11,6 +13,7 @@ const users = ref<any[]>([]);
 const nodes = ref<any[]>([]);
 const blueprints = ref<any[]>([]);
 const isLoading = ref(false);
+const isCreating = ref(false);
 
 const showCreateModal = ref(false);
 const serverForm = ref({
@@ -101,12 +104,15 @@ async function loadData() {
 }
 
 async function createServer() {
+  isCreating.value = true;
   try {
     await ApiService.post('/admin/servers', serverForm.value);
     showCreateModal.value = false;
-    loadData();
+    await loadData();
   } catch (err) {
     console.error('Failed to provision server:', err);
+  } finally {
+    isCreating.value = false;
   }
 }
 
@@ -146,9 +152,7 @@ onMounted(() => {
 
     <!-- Servers Table -->
     <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
-        {{ t('common.loading') }}
-      </div>
+      <SkeletonTable v-if="isLoading" :columns="7" :rows="5" />
 
       <table v-else class="w-full text-left text-xs font-mono">
         <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
@@ -310,9 +314,14 @@ onMounted(() => {
           <button @click="showCreateModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createServer" class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md">
+          <ButtonSpinner
+            @click="createServer"
+            :loading="isCreating"
+            spinner-color="white"
+            class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md"
+          >
             Deploy Server
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>

@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiService } from '../../services/api.js';
 import { File, Folder, FolderPlus, FilePlus, Trash2, Edit3, ArrowLeft, Save, X } from 'lucide-vue-next';
+import LoadingOverlay from '../ui/LoadingOverlay.vue';
+import ButtonSpinner from '../ui/ButtonSpinner.vue';
 
 const props = defineProps<{
   serverUuid: string;
@@ -22,6 +24,7 @@ interface FileEntry {
 const currentDirectory = ref('/');
 const files = ref<FileEntry[]>([]);
 const isLoading = ref(false);
+const isDeleting = ref(false);
 
 // Edit Modal
 const editingFile = ref<string | null>(null);
@@ -96,13 +99,16 @@ async function deleteItem(name: string) {
   const path = currentDirectory.value === '/' ? `/${name}` : `${currentDirectory.value}/${name}`;
   if (!confirm(`Are you sure you want to delete ${name}?`)) return;
 
+  isDeleting.value = true;
   try {
     await ApiService.delete(`/client/servers/${props.serverUuid}/files`, {
       paths: [path],
     });
-    loadFiles();
+    await loadFiles();
   } catch (err) {
     console.error('Failed to delete item:', err);
+  } finally {
+    isDeleting.value = false;
   }
 }
 
@@ -151,7 +157,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+  <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl relative">
+    <LoadingOverlay :active="isLoading" text="Loading files..." />
+    <LoadingOverlay :active="isDeleting" text="Deleting file..." />
+
     <!-- Toolbar -->
     <div class="flex items-center justify-between p-3.5 border-b border-surface-border bg-surface-deep">
       <div class="flex items-center space-x-2">
@@ -284,9 +293,14 @@ onMounted(() => {
           <button @click="showNewFolderModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createFolder" class="px-3 py-1.5 text-xs bg-primary hover:bg-primary-dark text-black font-semibold rounded-lg">
+          <ButtonSpinner
+            @click="createFolder"
+            :disabled="!newFolderName.trim()"
+            spinner-color="white"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg"
+          >
             {{ t('common.create') }}
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>
@@ -305,9 +319,14 @@ onMounted(() => {
           <button @click="showNewFileModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createFile" class="px-3 py-1.5 text-xs bg-primary hover:bg-primary-dark text-black font-semibold rounded-lg">
+          <ButtonSpinner
+            @click="createFile"
+            :disabled="!newFileName.trim()"
+            spinner-color="white"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg"
+          >
             {{ t('common.create') }}
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>

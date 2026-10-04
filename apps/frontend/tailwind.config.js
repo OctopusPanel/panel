@@ -14,12 +14,12 @@ export default {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         surface: {
-          deep: '#08090d',
-          base: '#0c0d12',
-          card: '#13151f',
-          elevated: '#1a1d2b',
-          border: '#222634',
-          'border-subtle': 'rgba(34, 38, 52, 0.65)',
+          deep: '#27282b',
+          base: '#343538',
+          card: '#3d3e42',
+          elevated: '#494a50',
+          border: '#585960',
+          'border-subtle': 'rgba(88, 89, 96, 0.65)',
         },
         primary: {
           DEFAULT: '#db982b',
@@ -51,7 +51,7 @@ export default {
           memory: '#a78bfa',
         },
         card: {
-          DEFAULT: '#13151f',
+          DEFAULT: '#3d3e42',
           foreground: '#f3f4f6',
         },
       },

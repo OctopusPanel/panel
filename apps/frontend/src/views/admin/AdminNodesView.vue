@@ -3,11 +3,14 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiService } from '../../services/api.js';
 import { Cpu, Terminal, Copy, Plus, X } from 'lucide-vue-next';
+import SkeletonTable from '../../components/ui/SkeletonTable.vue';
+import ButtonSpinner from '../../components/ui/ButtonSpinner.vue';
 
 const { t } = useI18n();
 
 const nodes = ref<any[]>([]);
 const isLoading = ref(false);
+const isCreating = ref(false);
 
 // New Node Modal
 const showCreateModal = ref(false);
@@ -35,14 +38,17 @@ async function loadNodes() {
 }
 
 async function createNode() {
+  isCreating.value = true;
   try {
     const res = await ApiService.post<{ node: any; setupCommand: string }>('/admin/nodes', form.value);
     showCreateModal.value = false;
     activeSetupCommand.value = res.setupCommand;
     showSetupModal.value = true;
-    loadNodes();
+    await loadNodes();
   } catch (err) {
     console.error('Failed to create node:', err);
+  } finally {
+    isCreating.value = false;
   }
 }
 
@@ -88,9 +94,7 @@ onMounted(() => {
 
     <!-- Nodes Table -->
     <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
-        {{ t('common.loading') }}
-      </div>
+      <SkeletonTable v-if="isLoading" :columns="6" :rows="5" />
 
       <table v-else class="w-full text-left text-xs">
         <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
@@ -183,9 +187,14 @@ onMounted(() => {
           <button @click="showCreateModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createNode" class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md">
+          <ButtonSpinner
+            @click="createNode"
+            :loading="isCreating"
+            spinner-color="white"
+            class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md"
+          >
             {{ t('common.create') }}
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>

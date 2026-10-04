@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { ApiService } from '../services/api.js';
@@ -16,10 +16,12 @@ import CockpitSchedulesTab from '../components/cockpit/CockpitSchedulesTab.vue';
 import CockpitSubusersTab from '../components/cockpit/CockpitSubusersTab.vue';
 import CockpitSettingsTab from '../components/cockpit/CockpitSettingsTab.vue';
 import ModuleSlot from '../components/modules/ModuleSlot.vue';
+import ButtonSpinner from '../components/ui/ButtonSpinner.vue';
 import {
   Power,
   RotateCcw,
   Square,
+  Skull,
   ArrowLeft,
 } from 'lucide-vue-next';
 import { PowerAction } from '@octopus/shared';
@@ -112,9 +114,19 @@ onBeforeUnmount(() => {
   }
 });
 
+const activePowerAction = ref<PowerAction | null>(null);
+
 async function handlePower(action: PowerAction) {
-  await serverStore.sendPowerAction(serverUuid, action);
-  serverStore.fetchServerDetails(serverUuid);
+  if (activePowerAction.value !== null) return;
+  activePowerAction.value = action;
+  try {
+    await serverStore.sendPowerAction(serverUuid, action);
+    await serverStore.fetchServerDetails(serverUuid);
+  } catch (err) {
+    console.error('Power action failed:', err);
+  } finally {
+    activePowerAction.value = null;
+  }
 }
 </script>
 
@@ -160,29 +172,49 @@ async function handlePower(action: PowerAction) {
         </div>
       </div>
 
-      <!-- Header Power Controls (Tactile) -->
+      <!-- Header Power Controls (Tactile with ButtonSpinner & Click Lock) -->
       <div class="flex items-center space-x-2">
-        <button
+        <ButtonSpinner
+          :loading="activePowerAction === PowerAction.START"
+          :disabled="activePowerAction !== null"
+          spinner-color="white"
           @click="handlePower(PowerAction.START)"
-          class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-status-online hover:bg-emerald-600 text-slate-950 transition-all shadow-md active:scale-[0.98]"
+          class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-status-online hover:bg-emerald-600 text-slate-950 transition-all shadow-md active:scale-[0.98]"
         >
           <Power class="w-3.5 h-3.5 mr-1.5" />
           {{ t('servers.start') }}
-        </button>
-        <button
+        </ButtonSpinner>
+        <ButtonSpinner
+          :loading="activePowerAction === PowerAction.RESTART"
+          :disabled="activePowerAction !== null"
+          spinner-color="white"
           @click="handlePower(PowerAction.RESTART)"
-          class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
+          class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
         >
           <RotateCcw class="w-3.5 h-3.5 mr-1.5" />
           {{ t('servers.restart') }}
-        </button>
-        <button
+        </ButtonSpinner>
+        <ButtonSpinner
+          :loading="activePowerAction === PowerAction.STOP"
+          :disabled="activePowerAction !== null"
+          spinner-color="white"
           @click="handlePower(PowerAction.STOP)"
-          class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-status-offline hover:bg-rose-600 text-slate-950 transition-all shadow-md active:scale-[0.98]"
+          class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-status-offline hover:bg-rose-600 text-slate-950 transition-all shadow-md active:scale-[0.98]"
         >
           <Square class="w-3.5 h-3.5 mr-1.5" />
           {{ t('servers.stop') }}
-        </button>
+        </ButtonSpinner>
+        <ButtonSpinner
+          :loading="activePowerAction === PowerAction.KILL"
+          :disabled="activePowerAction !== null"
+          spinner-color="white"
+          @click="handlePower(PowerAction.KILL)"
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-elevated hover:bg-rose-950/80 text-rose-400 hover:text-rose-300 border border-rose-500/30 hover:border-rose-500/60 transition-all shadow-md active:scale-[0.98]"
+          title="Force Kill Container"
+        >
+          <Skull class="w-3.5 h-3.5 mr-1.5" />
+          Kill
+        </ButtonSpinner>
       </div>
     </div>
 

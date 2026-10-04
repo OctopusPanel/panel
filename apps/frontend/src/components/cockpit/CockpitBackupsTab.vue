@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { ApiService } from '../../services/api.js';
 import { ServerBackup } from '../../services/demo-data.js';
 import { Archive, Plus, Lock, Unlock, Download, RotateCcw, Trash2, AlertTriangle, Check, X, Shield } from 'lucide-vue-next';
+import ButtonSpinner from '../ui/ButtonSpinner.vue';
 
 const props = defineProps<{
   serverUuid: string;
@@ -10,6 +11,7 @@ const props = defineProps<{
 
 const backups = ref<ServerBackup[]>([]);
 const isLoading = ref(false);
+const deletingBackupId = ref<string | null>(null);
 
 // Modals
 const showCreateModal = ref(false);
@@ -97,12 +99,15 @@ async function confirmRestore() {
 
 async function deleteBackup(backupId: string) {
   if (!confirm('Are you sure you want to permanently delete this backup archive?')) return;
+  deletingBackupId.value = backupId;
   try {
     await ApiService.delete(`/client/servers/${props.serverUuid}/backups/${backupId}`);
     showToast('Backup deleted');
-    loadBackups();
+    await loadBackups();
   } catch (err) {
     console.error('Failed to delete backup:', err);
+  } finally {
+    deletingBackupId.value = null;
   }
 }
 
@@ -238,13 +243,15 @@ onMounted(() => {
               >
                 <Download class="w-3.5 h-3.5" />
               </button>
-              <button
+              <ButtonSpinner
                 @click="deleteBackup(b.id)"
+                :loading="deletingBackupId === b.id"
+                spinner-color="muted"
                 class="p-1.5 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
                 title="Delete Backup"
               >
                 <Trash2 class="w-3.5 h-3.5" />
-              </button>
+              </ButtonSpinner>
             </td>
           </tr>
         </tbody>
@@ -294,13 +301,15 @@ onMounted(() => {
           <button @click="showCreateModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             Cancel
           </button>
-          <button
+          <ButtonSpinner
             @click="createBackup"
-            :disabled="isCreating || !backupName.trim()"
-            class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark disabled:opacity-50 text-slate-950 font-semibold rounded-lg transition-colors"
+            :loading="isCreating"
+            :disabled="!backupName.trim()"
+            spinner-color="white"
+            class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md"
           >
-            {{ isCreating ? 'Creating Archive...' : 'Start Backup' }}
-          </button>
+            Start Backup
+          </ButtonSpinner>
         </div>
       </div>
     </div>
@@ -326,14 +335,15 @@ onMounted(() => {
           <button @click="showRestoreModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             Cancel
           </button>
-          <button
+          <ButtonSpinner
             @click="confirmRestore"
-            :disabled="isRestoring"
+            :loading="isRestoring"
+            spinner-color="white"
             class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg flex items-center transition-colors shadow-md"
           >
             <RotateCcw class="w-3.5 h-3.5 mr-1.5" />
-            {{ isRestoring ? 'Restoring Files...' : 'Confirm & Restore' }}
-          </button>
+            Confirm &amp; Restore
+          </ButtonSpinner>
         </div>
       </div>
     </div>

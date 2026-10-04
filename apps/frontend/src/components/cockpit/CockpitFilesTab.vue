@@ -24,6 +24,9 @@ import {
   RefreshCw,
 } from 'lucide-vue-next';
 
+import LoadingOverlay from '../ui/LoadingOverlay.vue';
+import ButtonSpinner from '../ui/ButtonSpinner.vue';
+
 const props = defineProps<{
   serverUuid: string;
 }>();
@@ -43,6 +46,7 @@ interface FileEntry {
 const currentDirectory = ref('/home/container');
 const files = ref<FileEntry[]>([]);
 const isLoading = ref(false);
+const isDeleting = ref(false);
 
 // Edit Modal
 const editingFile = ref<string | null>(null);
@@ -170,14 +174,17 @@ async function deleteItem(name: string) {
   const path = currentDirectory.value === '/' ? `/${name}` : `${currentDirectory.value}/${name}`;
   if (!confirm(`Are you sure you want to permanently delete "${name}"?`)) return;
 
+  isDeleting.value = true;
   try {
     await ApiService.delete(`/client/servers/${props.serverUuid}/files`, {
       paths: [path],
     });
     showToast(`Deleted ${name}`);
-    loadFiles();
+    await loadFiles();
   } catch (err) {
     console.error('Failed to delete item:', err);
+  } finally {
+    isDeleting.value = false;
   }
 }
 
@@ -269,7 +276,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+  <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl relative">
+    <!-- Directory Transition & Deletion Loading Overlays -->
+    <LoadingOverlay :active="isLoading" text="Loading directory contents..." />
+    <LoadingOverlay :active="isDeleting" text="Deleting file from container..." />
+
     <!-- Breadcrumb & Main Toolbar -->
     <div class="flex flex-wrap items-center justify-between p-3.5 border-b border-surface-border bg-surface-deep gap-2">
       <!-- Breadcrumbs -->
@@ -452,15 +463,16 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="flex items-center space-x-2">
-            <button
+            <ButtonSpinner
               @click="saveFile"
-              :disabled="isSaving"
-              class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
+              :loading="isSaving"
+              spinner-color="white"
+              class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
             >
               <Check v-if="saveSuccess" class="w-3.5 h-3.5 mr-1 text-slate-950" />
               <Save v-else class="w-3.5 h-3.5 mr-1" />
               {{ saveSuccess ? 'Saved!' : 'Save Changes' }}
-            </button>
+            </ButtonSpinner>
             <button
               @click="editingFile = null"
               class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-surface-elevated transition-colors"
@@ -523,14 +535,16 @@ onBeforeUnmount(() => {
           <button @click="showUploadModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button
+          <ButtonSpinner
             @click="simulateUpload"
-            :disabled="isUploading || uploadFiles.length === 0"
-            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark disabled:opacity-50 text-slate-950 font-semibold rounded-lg flex items-center active:scale-[0.98]"
+            :loading="isUploading"
+            :disabled="uploadFiles.length === 0"
+            spinner-color="white"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg shadow-md active:scale-[0.98]"
           >
-            <RefreshCw v-if="isUploading" class="w-3.5 h-3.5 mr-1.5 animate-spin" />
-            {{ isUploading ? 'Uploading...' : 'Start Upload' }}
-          </button>
+            <Upload class="w-3.5 h-3.5 mr-1.5" />
+            Start Upload
+          </ButtonSpinner>
         </div>
       </div>
     </div>
@@ -550,9 +564,14 @@ onBeforeUnmount(() => {
           <button @click="showNewFolderModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="createFolder" class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]">
+          <ButtonSpinner
+            @click="createFolder"
+            :disabled="!newFolderName.trim()"
+            spinner-color="white"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]"
+          >
             Create Directory
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>
@@ -572,9 +591,14 @@ onBeforeUnmount(() => {
           <button @click="showNewFileModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="createFile" class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]">
+          <ButtonSpinner
+            @click="createFile"
+            :disabled="!newFileName.trim()"
+            spinner-color="white"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg active:scale-[0.98]"
+          >
             Create &amp; Edit
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>

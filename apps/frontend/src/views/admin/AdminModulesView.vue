@@ -1,18 +1,26 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModuleStore } from '../../stores/modules.js';
 import { Boxes, CheckCircle2, XCircle } from 'lucide-vue-next';
+import SkeletonTable from '../../components/ui/SkeletonTable.vue';
+import ButtonSpinner from '../../components/ui/ButtonSpinner.vue';
 
 const { t } = useI18n();
 const moduleStore = useModuleStore();
+const togglingId = ref<string | null>(null);
 
 onMounted(() => {
   moduleStore.fetchModules();
 });
 
 async function toggle(mod: any) {
-  await moduleStore.toggleModule(mod.id, !mod.isEnabled);
+  togglingId.value = mod.id;
+  try {
+    await moduleStore.toggleModule(mod.id, !mod.isEnabled);
+  } finally {
+    togglingId.value = null;
+  }
 }
 </script>
 
@@ -27,9 +35,7 @@ async function toggle(mod: any) {
 
     <!-- Modules Grid / Table -->
     <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
-      <div v-if="moduleStore.isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
-        {{ t('common.loading') }}
-      </div>
+      <SkeletonTable v-if="moduleStore.isLoading" :columns="7" :rows="4" />
 
       <div v-else-if="moduleStore.installedModules.length === 0" class="p-12 text-center text-xs text-slate-400">
         No third-party or official modules currently registered in <code>modules/</code>.
@@ -68,13 +74,16 @@ async function toggle(mod: any) {
               </span>
             </td>
             <td class="py-3 px-4 text-right">
-              <button
+              <ButtonSpinner
                 @click="toggle(mod)"
+                :loading="togglingId === mod.id"
+                spinner-size="xs"
+                spinner-color="white"
                 class="px-2.5 py-1 text-[11px] rounded font-medium transition-colors"
                 :class="mod.isEnabled ? 'bg-status-offline/10 text-status-offline border border-status-offline/25 hover:bg-status-offline/20' : 'bg-status-online/10 text-status-online border border-status-online/25 hover:bg-status-online/20'"
               >
                 {{ mod.isEnabled ? t('admin.modules.disable') : t('admin.modules.enable') }}
-              </button>
+              </ButtonSpinner>
             </td>
           </tr>
         </tbody>
