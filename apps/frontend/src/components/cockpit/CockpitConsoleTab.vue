@@ -139,7 +139,6 @@ async function connectSocket() {
 
     socket.onclose = () => {
       isConnected.value = false;
-      term?.writeln('\r\n\x1b[31m[OctopusPanel]\x1b[0m Stream disconnected.');
     };
 
     socket.onerror = () => {
