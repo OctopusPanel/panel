@@ -7,6 +7,7 @@ import { ApiService } from '../../services/api.js';
 import { Terminal as TerminalIcon, Send, RotateCcw, Power, Square, Maximize2, Minimize2, Trash2, Skull, AlertTriangle, X } from 'lucide-vue-next';
 import { PowerAction } from '@octopus/shared';
 import { useServerStore } from '../../stores/server.js';
+import { mapDaemonStats } from '../../utils/telemetry.js';
 
 const props = defineProps<{
   serverUuid: string;
@@ -114,19 +115,12 @@ async function connectSocket() {
         } else if (eventName === 'stats' && (eventData || parsed.args?.[0])) {
           const stats = (eventData || parsed.args?.[0]) as any;
           if (serverStore.currentServer && stats) {
-            serverStore.currentServer.metrics = {
-              cpuCurrent: stats.cpu_absolute ?? stats.cpuAbsolute ?? stats.cpu_percentage ?? 0,
-              memoryCurrentBytes: stats.memory_bytes ?? stats.memoryBytes ?? 0,
-              diskCurrentBytes: stats.disk_bytes ?? stats.diskBytes ?? 0,
-              networkRxBytes: stats.network?.rx_bytes ?? stats.networkRxBytes ?? 0,
-              networkTxBytes: stats.network?.tx_bytes ?? stats.networkTxBytes ?? 0,
-              uptimeSeconds: stats.uptime ?? (stats.uptimeMs ? Math.floor(stats.uptimeMs / 1000) : 0),
-            };
+            serverStore.currentServer.metrics = mapDaemonStats(stats, serverStore.currentServer.metrics);
           }
         } else if (eventName === 'status' && (eventData !== undefined || parsed.args?.[0])) {
           const newStatus = String(eventData ?? parsed.args?.[0]);
           if (serverStore.currentServer) {
-            serverStore.currentServer.status = newStatus;
+            serverStore.currentServer.status = newStatus.toLowerCase();
           }
         } else if (eventName === 'token_expiring' || eventName === 'token_expired') {
           // Token heartbeat
