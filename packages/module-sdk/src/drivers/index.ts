@@ -2,9 +2,12 @@ import { Server, ServerMetrics, SessionUser, PowerAction } from '@octopus/shared
 import { TentacleHttpClient } from '@octopus/tentacle-client';
 
 export interface ProvisionOptions {
-  ports: Array<{ hostPort: number; containerPort: number; protocol?: string }>;
+  ports: Array<{ hostPort: number; containerPort: number; protocol?: string; hostIp?: string }>;
   startOnCompletion?: boolean;
   extraEnv?: Record<string, string>;
+  installScript?: string;
+  installContainer?: string;
+  installEntrypoint?: string;
 }
 
 export interface FileManagerDriver {
@@ -49,8 +52,18 @@ export class TentacleProviderDriver implements ServerProviderDriver {
 
   async create(server: Server, options?: ProvisionOptions): Promise<void> {
     const client = await this.clientFactory(server.nodeId);
+    let installConfig = undefined;
+    if (options?.installScript && options?.installContainer) {
+      installConfig = {
+        image: options.installContainer,
+        script: options.installScript,
+        entrypoint: options.installEntrypoint || undefined,
+      };
+    }
+
     await client.createServer({
       uuid: server.uuid,
+      name: server.name,
       image: server.dockerImage,
       memoryLimitMb: server.memory,
       swapLimitMb: server.swap,
@@ -60,7 +73,16 @@ export class TentacleProviderDriver implements ServerProviderDriver {
       ports: options?.ports || [],
       environment: { ...server.environment, ...(options?.extraEnv || {}) },
       startupCommand: server.startupCommand,
+      installConfig,
     });
+
+    if (installConfig) {
+      try {
+        await client.installServer(server.uuid);
+      } catch (err) {
+        console.error(`Failed to trigger installation pipeline for server ${server.uuid}:`, err);
+      }
+    }
   }
 
   async start(server: Server): Promise<void> {

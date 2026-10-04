@@ -13,17 +13,17 @@ clientWsRouter.use('*', requireAuth);
 clientWsRouter.get('/:id/ws-token', async (c) => {
   const user = c.get('user') as SessionUser;
   const param = c.req.param('id');
-  const idNum = parseInt(param, 10);
+  const isNumeric = /^\d+$/.test(param);
 
   const server = await db.query.servers.findFirst({
-    where: isNaN(idNum) ? eq(servers.uuid, param) : eq(servers.id, idNum),
+    where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
     with: {
       node: true,
     },
   });
 
   if (!server) {
-    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param });
+    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param }, 'Server not found');
   }
 
   if (user.role !== UserRole.ADMIN && server.userId !== user.id) {
@@ -32,7 +32,10 @@ clientWsRouter.get('/:id/ws-token', async (c) => {
 
   const token = generateWsToken(user.id, server.uuid);
   const node = server.node;
-  const wsUrl = `ws://${node.fqdn}:${node.apiPort}/api/servers/${server.uuid}/ws`;
+  const cleanFqdn = node.fqdn.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  const isHttps = node.fqdn.startsWith('https://') || c.req.header('x-forwarded-proto') === 'https';
+  const scheme = node.fqdn.startsWith('https://') ? 'wss' : (node.fqdn.startsWith('http://') ? 'ws' : (isHttps ? 'wss' : 'ws'));
+  const wsUrl = `${scheme}://${cleanFqdn}:${node.apiPort}/api/servers/${server.uuid}/ws`;
 
   return c.json({
     success: true,

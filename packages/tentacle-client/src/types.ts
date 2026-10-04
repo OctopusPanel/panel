@@ -45,18 +45,53 @@ export interface TentacleSystemMetrics {
   diskUsedMb: number;
 }
 
+export interface TentaclePortAllocation {
+  host_ip: string;
+  host_port: number;
+  container_port: number;
+  protocol: string;
+}
+
+export interface TentacleInstallConfig {
+  image: string;
+  script: string;
+  entrypoint?: string;
+}
+
 export interface TentacleServerCreateOptions {
   uuid: string;
+  name?: string;
   image: string;
-  memoryLimitMb: number;
-  swapLimitMb: number;
-  cpuLimitPercent: number;
-  diskLimitMb: number;
+  memoryLimitMb?: number;
+  swapLimitMb?: number;
+  cpuLimitPercent?: number;
+  diskLimitMb?: number;
   ioWeight?: number;
-  ports: Array<{ hostPort: number; containerPort: number; protocol?: string }>;
-  environment: Record<string, string>;
+  ports?: Array<{ hostPort: number; containerPort: number; protocol?: string; hostIp?: string }>;
+  environment?: Record<string, string>;
   startupCommand: string;
   stopCommand?: string;
+  stopTimeoutSecs?: number;
+  installConfig?: TentacleInstallConfig;
+}
+
+export interface TentacleServerCreatePayload {
+  id: string;
+  name: string;
+  docker_image: string;
+  startup_command: string;
+  stop_command?: string;
+  stop_timeout_secs: number;
+  environment: Record<string, string>;
+  allocations: TentaclePortAllocation[];
+  memory_limit_bytes?: number;
+  swap_limit_bytes?: number;
+  cpu_quota?: number;
+  cpu_period?: number;
+  disk_quota_bytes?: number;
+  start_detection_regex?: string;
+  crash_detection_regex?: string;
+  install_config?: TentacleInstallConfig;
 }
 
 export interface TentacleServerInfo {

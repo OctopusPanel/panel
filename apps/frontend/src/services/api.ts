@@ -774,6 +774,9 @@ export class ApiService {
         code: 'INTERNAL_ERROR',
         message: `HTTP ${res.status}: ${res.statusText}`,
       };
+      if (!err.message) {
+        err.message = (err as any).code || `HTTP ${res.status}: ${res.statusText}`;
+      }
       throw err;
     }
 

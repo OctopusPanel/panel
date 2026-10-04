@@ -79,12 +79,13 @@ adminServersRouter.post('/', async (c) => {
   const env: Record<string, string> = {};
   if (Array.isArray(blueprint.variables)) {
     for (const v of blueprint.variables as any[]) {
-      if (v.envVariable) {
-        env[v.envVariable] = data.environment[v.envVariable] ?? v.defaultValue ?? '';
+      const varKey = v.envVariable || v.env_variable;
+      if (varKey) {
+        env[varKey] = data.environment?.[varKey] ?? v.defaultValue ?? v.default_value ?? '';
       }
     }
   }
-  Object.assign(env, data.environment);
+  Object.assign(env, data.environment || {});
 
   // Interpolate startup command
   const startupCommand = VariableInterpolator.interpolateString(
@@ -136,10 +137,15 @@ adminServersRouter.post('/', async (c) => {
   // Provision container via Driver
   try {
     const driver = globalProviders.get(createdServer.providerType) || globalProviders.getDefault();
-    const ports = allocation ? [{ hostPort: allocation.port, containerPort: allocation.port }] : [];
+    const ports = allocation
+      ? [{ hostPort: allocation.port, containerPort: allocation.port, hostIp: allocation.ipAddress || '0.0.0.0' }]
+      : [];
     await driver.create(createdServer as unknown as Server, {
       ports,
       startOnCompletion: data.startOnCompletion,
+      installScript: blueprint.installScript || undefined,
+      installContainer: blueprint.installContainer || undefined,
+      installEntrypoint: blueprint.installEntrypoint || undefined,
     });
   } catch (err: any) {
     console.error('Failed to provision server on remote node:', err);
@@ -158,19 +164,20 @@ adminServersRouter.post('/', async (c) => {
 
 // POST /api/v1/admin/servers/:id/suspend
 adminServersRouter.post('/:id/suspend', async (c) => {
-  const id = parseInt(c.req.param('id'), 10);
+  const param = c.req.param('id');
+  const isNumeric = /^\d+$/.test(param);
   const server = await db.query.servers.findFirst({
-    where: eq(servers.id, id),
+    where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
   });
 
   if (!server) {
-    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id });
+    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param }, 'Server not found');
   }
 
   const [updated] = await db
     .update(servers)
     .set({ isSuspended: true, status: ServerStatus.SUSPENDED, updatedAt: new Date() })
-    .where(eq(servers.id, id))
+    .where(eq(servers.id, server.id))
     .returning();
 
   try {
@@ -188,19 +195,20 @@ adminServersRouter.post('/:id/suspend', async (c) => {
 
 // POST /api/v1/admin/servers/:id/unsuspend
 adminServersRouter.post('/:id/unsuspend', async (c) => {
-  const id = parseInt(c.req.param('id'), 10);
+  const param = c.req.param('id');
+  const isNumeric = /^\d+$/.test(param);
   const server = await db.query.servers.findFirst({
-    where: eq(servers.id, id),
+    where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
   });
 
   if (!server) {
-    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id });
+    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param }, 'Server not found');
   }
 
   const [updated] = await db
     .update(servers)
     .set({ isSuspended: false, status: ServerStatus.OFFLINE, updatedAt: new Date() })
-    .where(eq(servers.id, id))
+    .where(eq(servers.id, server.id))
     .returning();
 
   await globalHooks.emit('server:unsuspended', { server: updated as unknown as Server });
@@ -213,13 +221,14 @@ adminServersRouter.post('/:id/unsuspend', async (c) => {
 
 // DELETE /api/v1/admin/servers/:id
 adminServersRouter.delete('/:id', async (c) => {
-  const id = parseInt(c.req.param('id'), 10);
+  const param = c.req.param('id');
+  const isNumeric = /^\d+$/.test(param);
   const server = await db.query.servers.findFirst({
-    where: eq(servers.id, id),
+    where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
   });
 
   if (!server) {
-    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id });
+    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param }, 'Server not found');
   }
 
   try {
@@ -230,10 +239,10 @@ adminServersRouter.delete('/:id', async (c) => {
   }
 
   // Free allocations
-  await db.update(allocations).set({ serverId: null, isPrimary: false }).where(eq(allocations.serverId, id));
-  await db.delete(servers).where(eq(servers.id, id));
+  await db.update(allocations).set({ serverId: null, isPrimary: false }).where(eq(allocations.serverId, server.id));
+  await db.delete(servers).where(eq(servers.id, server.id));
 
-  await globalHooks.emit('server:deleted', { serverId: id, uuid: server.uuid });
+  await globalHooks.emit('server:deleted', { serverId: server.id, uuid: server.uuid });
 
   return c.json({
     success: true,

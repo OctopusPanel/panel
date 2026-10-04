@@ -89,7 +89,13 @@ async function connectSocket() {
     );
 
     const wsUrl = `${res.socketUrl}?token=${res.token}`;
-    socket = new WebSocket(wsUrl);
+    try {
+      socket = new WebSocket(wsUrl);
+    } catch (wsErr: any) {
+      const wsErrText = wsErr?.message || wsErr?.code || (typeof wsErr === 'object' ? JSON.stringify(wsErr) : String(wsErr));
+      term?.writeln(`\r\n\x1b[31m[OctopusPanel] Failed to open WebSocket: ${wsErrText}\x1b[0m`);
+      return;
+    }
 
     socket.onopen = () => {
       isConnected.value = true;
@@ -119,7 +125,8 @@ async function connectSocket() {
       term?.writeln('\r\n\x1b[31m[OctopusPanel]\x1b[0m WebSocket connection error.');
     };
   } catch (err: any) {
-    term?.writeln(`\r\n\x1b[31m[OctopusPanel] Failed to establish terminal session: ${err.message || err}\x1b[0m`);
+    const errText = err?.message || err?.code || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+    term?.writeln(`\r\n\x1b[31m[OctopusPanel] Failed to establish terminal session: ${errText}\x1b[0m`);
   }
 }
 
@@ -191,7 +198,8 @@ async function handlePower(action: PowerAction) {
     await serverStore.sendPowerAction(props.serverUuid, action);
     term?.writeln(`\x1b[33m[OctopusPanel] Power action '${action}' triggered.\x1b[0m`);
   } catch (err: any) {
-    term?.writeln(`\x1b[31m[Power Error] ${err.message || 'Action failed'}\x1b[0m`);
+    const errText = err?.message || err?.code || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+    term?.writeln(`\x1b[31m[Power Error] ${errText}\x1b[0m`);
   }
 }
 

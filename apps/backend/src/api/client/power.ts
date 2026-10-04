@@ -14,14 +14,14 @@ clientPowerRouter.use('*', requireAuth);
 clientPowerRouter.post('/:id/power', async (c) => {
   const user = c.get('user') as SessionUser;
   const param = c.req.param('id');
-  const idNum = parseInt(param, 10);
+  const isNumeric = /^\d+$/.test(param);
 
   const server = await db.query.servers.findFirst({
-    where: isNaN(idNum) ? eq(servers.uuid, param) : eq(servers.id, idNum),
+    where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
   });
 
   if (!server) {
-    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param });
+    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param }, 'Server not found');
   }
 
   if (server.isSuspended) {
