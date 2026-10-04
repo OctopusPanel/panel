@@ -18,6 +18,11 @@ clientPowerRouter.post('/:id/power', async (c) => {
 
   const server = await db.query.servers.findFirst({
     where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
+    with: {
+      node: true,
+      allocation: true,
+      blueprint: true,
+    },
   });
 
   if (!server) {

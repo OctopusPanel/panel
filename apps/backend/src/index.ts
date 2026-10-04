@@ -10,6 +10,7 @@ import { config } from './config.js';
 import { apiRouter } from './api/routes.js';
 import { registerDefaultProviders } from './core/tentacle-manager.js';
 import { moduleLoader } from './core/module-loader.js';
+import { attachConsoleProxy } from './core/console-proxy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -114,7 +115,7 @@ async function bootstrap() {
   }
 
   // Start HTTP Server
-  serve(
+  const httpServer = serve(
     {
       fetch: app.fetch,
       port: config.port,
@@ -124,6 +125,8 @@ async function bootstrap() {
       console.log(`🚀 OctopusPanel API listening on http://${info.address}:${info.port}`);
     },
   );
+
+  attachConsoleProxy(httpServer);
 }
 
 bootstrap().catch((err) => {

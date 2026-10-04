@@ -60,6 +60,31 @@ export class TentacleProviderDriver implements ServerProviderDriver {
         entrypoint: options.installEntrypoint || undefined,
       };
     }
+    const ports = options?.ports || [];
+    if (ports.length === 0) {
+      const mainAlloc = (server as any).allocation;
+      if (mainAlloc?.port) {
+        ports.push({
+          hostPort: mainAlloc.port,
+          containerPort: mainAlloc.port,
+          protocol: 'tcp',
+          hostIp: mainAlloc.ipAddress || '0.0.0.0',
+        });
+      }
+      const otherAllocs = (server as any).allocations;
+      if (Array.isArray(otherAllocs)) {
+        for (const a of otherAllocs) {
+          if (a?.port && !ports.some((p) => p.hostPort === a.port)) {
+            ports.push({
+              hostPort: a.port,
+              containerPort: a.port,
+              protocol: 'tcp',
+              hostIp: a.ipAddress || '0.0.0.0',
+            });
+          }
+        }
+      }
+    }
 
     await client.createServer({
       uuid: server.uuid,
@@ -70,7 +95,7 @@ export class TentacleProviderDriver implements ServerProviderDriver {
       cpuLimitPercent: server.cpu,
       diskLimitMb: server.disk,
       ioWeight: server.io,
-      ports: options?.ports || [],
+      ports,
       environment: { ...server.environment, ...(options?.extraEnv || {}) },
       startupCommand: server.startupCommand,
       installConfig,
@@ -87,7 +112,16 @@ export class TentacleProviderDriver implements ServerProviderDriver {
 
   async start(server: Server): Promise<void> {
     const client = await this.clientFactory(server.nodeId);
-    await client.powerAction(server.uuid, PowerAction.START);
+    try {
+      await client.powerAction(server.uuid, PowerAction.START);
+    } catch (err: any) {
+      if (err?.message?.includes('404') || err?.message?.toLowerCase()?.includes('not found')) {
+        await this.create(server);
+        await client.powerAction(server.uuid, PowerAction.START);
+        return;
+      }
+      throw err;
+    }
   }
 
   async stop(server: Server, _signal?: string): Promise<void> {

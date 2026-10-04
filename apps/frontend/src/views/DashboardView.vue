@@ -219,7 +219,6 @@ function getStatusBadge(status: string) {
                 <span class="text-[11px] text-slate-400 flex items-center font-sans">
                   <span class="mr-1">{{ (server as any).node?.countryFlag || '🌐' }}</span>
                   {{ (server as any).node?.location?.split(',')[0] || (server as any).node?.name || 'Local Node' }}
-                  <span class="text-[10px] text-emerald-400 font-mono ml-1.5">({{ (server as any).node?.pingMs || 15 }}ms)</span>
                 </span>
               </div>
             </div>
@@ -242,13 +241,13 @@ function getStatusBadge(status: string) {
                   CPU
                 </span>
                 <span class="font-bold text-slate-200">
-                  {{ server.status === 'running' ? (server as any).metrics?.cpuCurrent ?? 18.4 : 0 }}%
+                  {{ server.status === 'running' ? ((server as any).metrics?.cpuCurrent ?? (server as any).metrics?.resources?.cpuAbsolute ?? 0) : 0 }}%
                 </span>
               </div>
               <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                 <div
                   class="h-full rounded-full transition-all duration-500 bg-blue-500"
-                  :style="{ width: `${server.status === 'running' ? Math.min(100, (((server as any).metrics?.cpuCurrent ?? 18.4) / (server.cpu || 200)) * 100) : 0}%` }"
+                  :style="{ width: `${server.status === 'running' ? Math.min(100, (((server as any).metrics?.cpuCurrent ?? (server as any).metrics?.resources?.cpuAbsolute ?? 0) / (server.cpu || 100)) * 100) : 0}%` }"
                 ></div>
               </div>
               <span class="text-[9px] text-slate-500 block mt-1">/ {{ server.cpu || 100 }}% limit</span>
@@ -262,16 +261,16 @@ function getStatusBadge(status: string) {
                   RAM
                 </span>
                 <span class="font-bold text-slate-200">
-                  {{ server.status === 'running' ? (((server as any).metrics?.memoryCurrentBytes ?? 1971322880) / (1024 * 1024 * 1024)).toFixed(1) : 0 }} GB
+                  {{ server.status === 'running' ? (((server as any).metrics?.memoryCurrentBytes ?? (server as any).metrics?.resources?.memoryBytes ?? 0) / (1024 * 1024 * 1024)).toFixed(1) : '0.0' }} GB
                 </span>
               </div>
               <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                 <div
                   class="h-full rounded-full transition-all duration-500 bg-purple-500"
-                  :style="{ width: `${server.status === 'running' ? Math.min(100, (((server as any).metrics?.memoryCurrentBytes ?? 1971322880) / ((server.memory || 4096) * 1024 * 1024)) * 100) : 0}%` }"
+                  :style="{ width: `${server.status === 'running' ? Math.min(100, (((server as any).metrics?.memoryCurrentBytes ?? (server as any).metrics?.resources?.memoryBytes ?? 0) / ((server.memory || 1024) * 1024 * 1024)) * 100) : 0}%` }"
                 ></div>
               </div>
-              <span class="text-[9px] text-slate-500 block mt-1">/ {{ (server.memory / 1024).toFixed(0) }} GB quota</span>
+              <span class="text-[9px] text-slate-500 block mt-1">/ {{ ((server.memory || 1024) / 1024).toFixed(1) }} GB quota</span>
             </div>
           </div>
         </div>
