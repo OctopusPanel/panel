@@ -71,7 +71,7 @@ onMounted(() => {
 
       <button
         @click="showRangeModal = true"
-        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <Plus class="w-4 h-4 mr-2" />
         {{ t('admin.allocations.createRange') }}
@@ -79,13 +79,13 @@ onMounted(() => {
     </div>
 
     <!-- Table -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-500">
+    <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
         {{ t('common.loading') }}
       </div>
 
       <table v-else class="w-full text-left text-xs font-mono">
-        <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-3 px-4">{{ t('admin.allocations.ipAddress') }}</th>
             <th class="py-3 px-4">{{ t('servers.port') }}</th>
@@ -94,18 +94,18 @@ onMounted(() => {
             <th class="py-3 px-4 text-right">{{ t('common.actions') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60">
-          <tr v-for="alloc in allocations" :key="alloc.id" class="hover:bg-slate-800/30 transition-colors">
-            <td class="py-3 px-4 text-slate-200 flex items-center">
-              <Network class="w-4 h-4 text-amber-400 mr-2" />
+        <tbody class="divide-y divide-surface-border/50">
+          <tr v-for="alloc in allocations" :key="alloc.id" class="hover:bg-surface-elevated/40 transition-colors">
+            <td class="py-3 px-4 text-slate-200 flex items-center font-sans">
+              <Network class="w-4 h-4 text-primary mr-2" />
               {{ alloc.ipAddress }}
             </td>
             <td class="py-3 px-4 text-slate-300 font-semibold">{{ alloc.port }}</td>
-            <td class="py-3 px-4 text-slate-400">{{ alloc.node?.name }}</td>
+            <td class="py-3 px-4 text-slate-400 font-sans">{{ alloc.node?.name }}</td>
             <td class="py-3 px-4">
               <span
-                class="px-2 py-0.5 rounded text-[10px]"
-                :class="alloc.serverId ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-slate-700/40 text-slate-400'"
+                class="px-2 py-0.5 rounded text-[10px] border font-medium font-sans"
+                :class="alloc.serverId ? 'bg-primary/10 text-primary-light border-primary/25' : 'bg-surface-deep text-slate-400 border-surface-border'"
               >
                 {{ alloc.server?.name || 'Unassigned' }}
               </span>
@@ -114,7 +114,7 @@ onMounted(() => {
               <button
                 v-if="!alloc.serverId"
                 @click="deleteAlloc(alloc.id)"
-                class="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1.5 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
               >
                 <Trash2 class="w-3.5 h-3.5" />
               </button>
@@ -125,43 +125,43 @@ onMounted(() => {
     </div>
 
     <!-- Range Modal -->
-    <div v-if="showRangeModal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showRangeModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <h3 class="text-sm font-semibold text-white">{{ t('admin.allocations.createRange') }}</h3>
-          <button @click="showRangeModal = false" class="text-slate-400 hover:text-white">
+          <button @click="showRangeModal = false" class="text-slate-400 hover:text-white transition-colors">
             <X class="w-4 h-4" />
           </button>
         </div>
 
         <div class="space-y-3 text-xs">
           <div>
-            <label class="block text-slate-400 mb-1">Target Node</label>
-            <select v-model="rangeForm.nodeId" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none">
+            <label class="block text-slate-400 mb-1 font-medium">Target Node</label>
+            <select v-model="rangeForm.nodeId" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors">
               <option v-for="node in nodes" :key="node.id" :value="node.id">{{ node.name }} ({{ node.fqdn }})</option>
             </select>
           </div>
           <div>
-            <label class="block text-slate-400 mb-1">{{ t('admin.allocations.ipAddress') }}</label>
-            <input v-model="rangeForm.ipAddress" type="text" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none" />
+            <label class="block text-slate-400 mb-1 font-medium">{{ t('admin.allocations.ipAddress') }}</label>
+            <input v-model="rangeForm.ipAddress" type="text" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors" />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-slate-400 mb-1">{{ t('admin.allocations.startPort') }}</label>
-              <input v-model.number="rangeForm.startPort" type="number" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none" />
+              <label class="block text-slate-400 mb-1 font-medium">{{ t('admin.allocations.startPort') }}</label>
+              <input v-model.number="rangeForm.startPort" type="number" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors font-mono" />
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">{{ t('admin.allocations.endPort') }}</label>
-              <input v-model.number="rangeForm.endPort" type="number" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none" />
+              <label class="block text-slate-400 mb-1 font-medium">{{ t('admin.allocations.endPort') }}</label>
+              <input v-model.number="rangeForm.endPort" type="number" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors font-mono" />
             </div>
           </div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-800">
-          <button @click="showRangeModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-3 border-t border-surface-border">
+          <button @click="showRangeModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createRange" class="px-3.5 py-1.5 text-xs bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg">
+          <button @click="createRange" class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md">
             {{ t('common.create') }}
           </button>
         </div>

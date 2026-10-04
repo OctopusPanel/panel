@@ -82,8 +82,8 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <h3 class="text-sm font-bold text-white flex items-center">
-          <Rocket class="w-4 h-4 text-blue-400 mr-2" />
-          Startup & Egg Environment Variables
+          <Rocket class="w-4 h-4 text-primary mr-2" />
+          Startup &amp; Egg Environment Variables
         </h3>
         <p class="text-xs text-slate-400 mt-0.5">
           Tune runtime environment parameters, Java flags, execution binaries, and container runtime image.
@@ -93,9 +93,9 @@ onMounted(() => {
       <button
         @click="saveVariables"
         :disabled="isSaving"
-        class="flex items-center px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-500/10"
+        class="flex items-center px-4 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
-        <Check v-if="saveSuccess" class="w-3.5 h-3.5 mr-1.5 text-emerald-300" />
+        <Check v-if="saveSuccess" class="w-3.5 h-3.5 mr-1.5 text-slate-950" />
         <Save v-else class="w-3.5 h-3.5 mr-1.5" />
         {{ saveSuccess ? 'Saved & Rehashed!' : 'Save Variables & Rehash' }}
       </button>
@@ -104,47 +104,47 @@ onMounted(() => {
     <!-- Restart Notice Banner -->
     <div
       v-if="restartNotice"
-      class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between text-xs text-amber-300"
+      class="bg-status-warning/10 border border-status-warning/30 rounded-xl p-4 flex items-center justify-between text-xs text-status-warning"
     >
       <div class="flex items-center space-x-2.5">
-        <AlertCircle class="w-4 h-4 text-amber-400 shrink-0" />
+        <AlertCircle class="w-4 h-4 text-status-warning shrink-0" />
         <span>Configuration updated successfully. A server restart is required for changes to take effect in the container.</span>
       </div>
       <button
         @click="restartNotice = false"
-        class="text-amber-400 hover:text-white text-xs font-semibold ml-4"
+        class="text-status-warning hover:text-white text-xs font-semibold ml-4"
       >
         Dismiss
       </button>
     </div>
 
     <!-- Live Startup Command Preview Box -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
+    <div class="bg-surface-card border border-surface-border rounded-xl p-5 shadow-xl space-y-3">
       <div class="flex items-center justify-between">
         <span class="text-xs font-mono font-semibold text-slate-300 uppercase tracking-wider flex items-center">
-          <Terminal class="w-4 h-4 text-blue-400 mr-2" />
+          <Terminal class="w-4 h-4 text-primary mr-2" />
           Live Startup Command Preview
         </span>
-        <span class="text-[10px] text-slate-500 font-mono">Dynamic Interpolation</span>
+        <span class="text-[10px] text-slate-400 font-mono">Dynamic Interpolation</span>
       </div>
 
-      <div class="bg-[#0b0f17] border border-slate-800 rounded-lg p-3.5 font-mono text-xs text-amber-300 select-all break-all leading-relaxed">
+      <div class="bg-surface-deep border border-surface-border rounded-lg p-3.5 font-mono text-xs text-primary-light select-all break-all leading-relaxed">
         {{ interpolatedCommand }}
       </div>
 
       <p class="text-[11px] text-slate-400">
-        Variables highlighted with brackets (e.g. <code class="text-blue-400" v-pre>{{SERVER_MEMORY}}</code>) are substituted in real-time when saving.
+        Variables highlighted with brackets (e.g. <code class="text-primary-light" v-pre>{{SERVER_MEMORY}}</code>) are substituted in real-time when saving.
       </p>
     </div>
 
     <!-- Container Runtime / Docker Image -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
+    <div class="bg-surface-card border border-surface-border rounded-xl p-5 shadow-xl space-y-3">
       <label class="block text-xs font-semibold text-slate-200 uppercase tracking-wider">
         Container Docker Image
       </label>
       <select
         v-model="selectedDockerImage"
-        class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+        class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-xs text-slate-200 font-mono outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
       >
         <option v-for="img in availableDockerImages" :key="img" :value="img">
           {{ img }}
@@ -156,12 +156,12 @@ onMounted(() => {
     </div>
 
     <!-- Dynamic Variable Form Grid -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
+    <div class="bg-surface-card border border-surface-border rounded-xl p-5 shadow-xl space-y-4">
       <h4 class="text-xs font-semibold text-slate-200 uppercase tracking-wider">
         Egg Environment Variables
       </h4>
 
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-500">
+      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
         Loading egg variable schema...
       </div>
 
@@ -169,12 +169,12 @@ onMounted(() => {
         <div
           v-for="v in variables"
           :key="v.key"
-          class="bg-[#0b0f17] border border-slate-800/80 rounded-lg p-3.5 space-y-2"
+          class="bg-surface-deep border border-surface-border/80 rounded-lg p-3.5 space-y-2"
         >
           <!-- Variable Name & Key -->
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-white">{{ v.name }}</span>
-            <code class="text-[10px] text-blue-400 font-mono bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
+            <code class="text-[10px] text-primary-light font-mono bg-primary/10 px-1.5 py-0.5 rounded border border-primary/25">
               {{ v.key }}
             </code>
           </div>
@@ -190,7 +190,7 @@ onMounted(() => {
             <select
               v-model="v.currentValue"
               :disabled="!v.userEditable"
-              class="w-full bg-[#111622] border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+              class="w-full bg-surface-card border border-surface-border rounded-lg p-2 text-xs text-slate-200 font-mono outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
             >
               <option v-for="opt in v.options" :key="opt" :value="opt">
                 {{ opt }}
@@ -208,7 +208,7 @@ onMounted(() => {
                 @change="(e: any) => v.currentValue = e.target.checked ? 'true' : 'false'"
                 class="sr-only peer"
               />
-              <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              <div class="w-9 h-5 bg-surface-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
               <span class="ml-2 text-xs font-mono text-slate-300">
                 {{ String(v.currentValue).toLowerCase() === 'true' ? 'Enabled' : 'Disabled' }}
               </span>
@@ -221,7 +221,7 @@ onMounted(() => {
               v-model="v.currentValue"
               type="number"
               :disabled="!v.userEditable"
-              class="w-full bg-[#111622] border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+              class="w-full bg-surface-card border border-surface-border rounded-lg p-2 text-xs text-slate-200 font-mono outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
             />
           </div>
 
@@ -231,14 +231,14 @@ onMounted(() => {
               v-model="v.currentValue"
               type="text"
               :disabled="!v.userEditable"
-              class="w-full bg-[#111622] border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+              class="w-full bg-surface-card border border-surface-border rounded-lg p-2 text-xs text-slate-200 font-mono outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
             />
           </div>
 
           <!-- Validation rule footnote -->
-          <div class="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-1">
+          <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-1">
             <span>Rules: {{ v.rules || 'none' }}</span>
-            <span v-if="!v.userEditable" class="text-amber-500/80">Read-Only</span>
+            <span v-if="!v.userEditable" class="text-status-warning/90">Read-Only</span>
           </div>
         </div>
       </div>

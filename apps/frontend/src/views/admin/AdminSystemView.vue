@@ -262,7 +262,7 @@ onUnmounted(() => {
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2.5">
-          <div class="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+          <div class="p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary">
             <RefreshCw class="w-5 h-5" />
           </div>
           <div>
@@ -273,28 +273,28 @@ onUnmounted(() => {
       </div>
 
       <!-- Navigation Tabs -->
-      <div class="flex items-center bg-[#111622] p-1 rounded-xl border border-slate-800">
+      <div class="flex items-center bg-surface-card p-1 rounded-xl border border-surface-border">
         <button
           @click="activeTab = 'updates'"
           class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-          :class="activeTab === 'updates' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-white'"
+          :class="activeTab === 'updates' ? 'bg-primary text-slate-950 font-semibold shadow-sm' : 'text-slate-400 hover:text-white'"
         >
           <Sparkles class="w-3.5 h-3.5" />
           {{ t('admin.system.tabUpdates') }}
           <span
             v-if="updateInfo?.hasUpdate || outdatedNodes.length > 0"
-            class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"
+            class="w-2 h-2 rounded-full bg-status-warning animate-pulse"
           />
         </button>
 
         <button
           @click="activeTab = 'snapshots'"
           class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-          :class="activeTab === 'snapshots' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-white'"
+          :class="activeTab === 'snapshots' ? 'bg-primary text-slate-950 font-semibold shadow-sm' : 'text-slate-400 hover:text-white'"
         >
           <Database class="w-3.5 h-3.5" />
           {{ t('admin.system.tabSnapshots') }}
-          <span class="text-[10px] bg-slate-800 px-1.5 py-0.2 rounded-full text-slate-300">
+          <span class="text-[10px] bg-surface-deep px-1.5 py-0.5 rounded-full text-slate-300 border border-surface-border">
             {{ snapshots.length }}
           </span>
         </button>
@@ -306,7 +306,7 @@ onUnmounted(() => {
     <!-- ========================================================================= -->
     <div v-if="activeTab === 'updates'" class="space-y-6">
       <!-- 1. Panel Update Cockpit Card -->
-      <div class="bg-[#111622] border border-slate-800 rounded-xl p-5 shadow-sm">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5 shadow-xl">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div class="space-y-3">
             <div class="flex items-center gap-2">
@@ -314,14 +314,14 @@ onUnmounted(() => {
               <h2 class="text-base font-bold text-white">{{ t('admin.system.panelCardTitle') }}</h2>
               <span
                 v-if="updateInfo?.hasUpdate"
-                class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1"
+                class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-primary/15 text-primary-light border border-primary/30 flex items-center gap-1"
               >
                 <ArrowUpCircle class="w-3 h-3" />
                 {{ t('admin.system.updateAvailable') }}
               </span>
               <span
                 v-else
-                class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"
+                class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-status-online/15 text-status-online border border-status-online/30 flex items-center gap-1"
               >
                 <CheckCircle2 class="w-3 h-3" />
                 {{ t('admin.system.upToDate') }}
@@ -337,15 +337,15 @@ onUnmounted(() => {
               </div>
               <div>
                 <span class="text-slate-400">{{ t('admin.system.latestVersion') }}:</span>
-                <span class="ml-1.5 font-mono font-semibold text-cyan-400">
+                <span class="ml-1.5 font-mono font-semibold text-primary-light">
                   v{{ updateInfo?.latestVersion || '0.2.0' }}
                 </span>
               </div>
             </div>
 
-            <div v-if="updateInfo?.releaseNotes" class="mt-2 bg-[#0b0f17] border border-slate-800/80 rounded-lg p-3 max-w-3xl">
+            <div v-if="updateInfo?.releaseNotes" class="mt-2 bg-surface-deep border border-surface-border rounded-lg p-3 max-w-3xl">
               <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                <Info class="w-3.5 h-3.5 text-cyan-400" />
+                <Info class="w-3.5 h-3.5 text-primary" />
                 {{ updateInfo.releaseName }}
               </div>
               <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-line font-mono text-[11px]">
@@ -359,13 +359,13 @@ onUnmounted(() => {
             <button
               v-if="updateInfo?.hasUpdate"
               @click="startPanelUpdate"
-              class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-500/20 transition-all active:scale-[0.98]"
+              class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-primary hover:bg-primary-dark text-slate-950 shadow-md transition-all active:scale-[0.98]"
             >
               <ArrowUpCircle class="w-4 h-4" />
               {{ t('admin.system.updatePanelNow') }}
             </button>
             <div v-else class="text-xs text-slate-400 flex items-center gap-1.5">
-              <ShieldCheck class="w-4 h-4 text-emerald-400" />
+              <ShieldCheck class="w-4 h-4 text-status-online" />
               <span>OctopusPanel is running the latest stable release.</span>
             </div>
           </div>
@@ -373,11 +373,11 @@ onUnmounted(() => {
       </div>
 
       <!-- 2. Node Fleet Update Matrix -->
-      <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+        <div class="p-4 border-b border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <Cpu class="w-4 h-4 text-cyan-400" />
+              <Cpu class="w-4 h-4 text-primary" />
               {{ t('admin.system.fleetTitle') }}
             </h3>
             <p class="text-[11px] text-slate-400 mt-0.5">{{ t('admin.system.fleetSubtitle') }}</p>
@@ -387,7 +387,7 @@ onUnmounted(() => {
             v-if="outdatedNodes.length > 0"
             @click="updateAllOutdatedNodes"
             :disabled="isUpdatingFleet"
-            class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-all disabled:opacity-50"
+            class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-primary/20 hover:bg-primary/30 text-primary-light border border-primary/30 transition-all disabled:opacity-50"
           >
             <Loader2 v-if="isUpdatingFleet" class="w-3.5 h-3.5 animate-spin" />
             <ArrowUpCircle v-else class="w-3.5 h-3.5" />
@@ -398,7 +398,7 @@ onUnmounted(() => {
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-[#0e131d]">
+              <tr class="border-b border-surface-border text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-surface-deep">
                 <th class="py-2.5 px-4">{{ t('admin.system.nodeName') }}</th>
                 <th class="py-2.5 px-4">FQDN / Port</th>
                 <th class="py-2.5 px-4">{{ t('admin.system.daemonVersion') }}</th>
@@ -406,11 +406,11 @@ onUnmounted(() => {
                 <th class="py-2.5 px-4 text-right">{{ t('admin.system.actions') }}</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/60 text-xs">
+            <tbody class="divide-y divide-surface-border/50 text-xs">
               <tr
                 v-for="node in nodes"
                 :key="node.id"
-                class="hover:bg-slate-800/30 transition-colors"
+                class="hover:bg-surface-elevated/40 transition-colors"
               >
                 <!-- Node Name & Region -->
                 <td class="py-3 px-4">
@@ -434,13 +434,13 @@ onUnmounted(() => {
                     <span class="text-slate-200">{{ node.daemonVersion || 'v0.1.7' }}</span>
                     <span
                       v-if="(node.daemonVersion || 'v0.1.7').replace(/^v/, '') !== daemonTargetVersion.replace(/^v/, '')"
-                      class="px-1.5 py-0.5 text-[9px] rounded font-sans font-medium bg-amber-500/15 text-amber-400 border border-amber-500/25"
+                      class="px-1.5 py-0.5 text-[9px] rounded font-sans font-medium bg-primary/15 text-primary-light border border-primary/25"
                     >
                       Update to {{ daemonTargetVersion }}
                     </span>
                     <span
                       v-else
-                      class="px-1.5 py-0.5 text-[9px] rounded font-sans font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
+                      class="px-1.5 py-0.5 text-[9px] rounded font-sans font-medium bg-status-online/15 text-status-online border border-status-online/25"
                     >
                       Latest
                     </span>
@@ -449,8 +449,8 @@ onUnmounted(() => {
 
                 <!-- Daemon Status -->
                 <td class="py-3 px-4">
-                  <span v-if="node.isOnline !== false" class="inline-flex items-center gap-1.5 text-emerald-400 font-medium text-[11px]">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span v-if="node.isOnline !== false" class="inline-flex items-center gap-1.5 text-status-online font-medium text-[11px]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-status-online animate-pulse" />
                     Online
                   </span>
                   <span v-else class="inline-flex items-center gap-1.5 text-slate-400 font-medium text-[11px]">
@@ -465,13 +465,13 @@ onUnmounted(() => {
                     v-if="(node.daemonVersion || 'v0.1.7').replace(/^v/, '') !== daemonTargetVersion.replace(/^v/, '')"
                     @click="updateNode(node)"
                     :disabled="updatingNodeIds.has(node.id)"
-                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 transition-all disabled:opacity-50"
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-primary/20 hover:bg-primary/30 text-primary-light border border-primary/30 transition-all disabled:opacity-50"
                   >
                     <Loader2 v-if="updatingNodeIds.has(node.id)" class="w-3 h-3 animate-spin" />
                     <ArrowUpCircle v-else class="w-3 h-3" />
                     <span>{{ updatingNodeIds.has(node.id) ? t('admin.system.updating') : t('admin.system.updateNode') }}</span>
                   </button>
-                  <span v-else class="text-[11px] text-slate-500 font-medium">
+                  <span v-else class="text-[11px] text-slate-400 font-medium">
                     Up to date
                   </span>
                 </td>
@@ -486,11 +486,11 @@ onUnmounted(() => {
     <!-- TAB 2: DATABASE SNAPSHOTS                                                -->
     <!-- ========================================================================= -->
     <div v-else class="space-y-6">
-      <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+        <div class="p-4 border-b border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <Database class="w-4 h-4 text-cyan-400" />
+              <Database class="w-4 h-4 text-primary" />
               {{ t('admin.system.snapshotsTitle') }}
             </h3>
             <p class="text-[11px] text-slate-400 mt-0.5">{{ t('admin.system.snapshotsSubtitle') }}</p>
@@ -499,7 +499,7 @@ onUnmounted(() => {
           <button
             @click="triggerCreateSnapshot"
             :disabled="isCreatingSnapshot"
-            class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all disabled:opacity-50"
+            class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
           >
             <Loader2 v-if="isCreatingSnapshot" class="w-3.5 h-3.5 animate-spin" />
             <Database v-else class="w-3.5 h-3.5" />
@@ -507,14 +507,14 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <div v-if="snapshots.length === 0" class="py-12 text-center text-slate-500 text-xs">
+        <div v-if="snapshots.length === 0" class="py-12 text-center text-slate-400 text-xs">
           No database snapshots found. Click above to create a manual backup.
         </div>
 
         <div v-else class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-[#0e131d]">
+              <tr class="border-b border-surface-border text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-surface-deep">
                 <th class="py-2.5 px-4">{{ t('admin.system.filename') }}</th>
                 <th class="py-2.5 px-4">{{ t('admin.system.type') }}</th>
                 <th class="py-2.5 px-4">{{ t('admin.system.size') }}</th>
@@ -522,11 +522,11 @@ onUnmounted(() => {
                 <th class="py-2.5 px-4 text-right">{{ t('admin.system.actions') }}</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/60 text-xs">
+            <tbody class="divide-y divide-surface-border/50 text-xs">
               <tr
                 v-for="snap in snapshots"
                 :key="snap.id"
-                class="hover:bg-slate-800/30 transition-colors"
+                class="hover:bg-surface-elevated/40 transition-colors"
               >
                 <!-- Filename -->
                 <td class="py-3 px-4 font-mono text-[11px] text-slate-200">
@@ -536,11 +536,11 @@ onUnmounted(() => {
                 <!-- Type Badge -->
                 <td class="py-3 px-4">
                   <span
-                    class="px-2 py-0.5 rounded text-[10px] font-medium"
+                    class="px-2 py-0.5 rounded text-[10px] font-medium border"
                     :class="{
-                      'bg-purple-500/15 text-purple-300 border border-purple-500/25': snap.type === 'pre-migration',
-                      'bg-cyan-500/15 text-cyan-300 border border-cyan-500/25': snap.type === 'manual',
-                      'bg-slate-500/15 text-slate-300 border border-slate-500/25': snap.type === 'scheduled',
+                      'bg-purple-500/15 text-purple-300 border-purple-500/25': snap.type === 'pre-migration',
+                      'bg-primary/15 text-primary-light border-primary/25': snap.type === 'manual',
+                      'bg-surface-deep text-slate-300 border-surface-border': snap.type === 'scheduled',
                     }"
                   >
                     {{ snap.type }}
@@ -563,7 +563,7 @@ onUnmounted(() => {
                     <button
                       @click="downloadSnapshot(snap)"
                       title="Download SQL Dump (.sql.gz)"
-                      class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                      class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors"
                     >
                       <Download class="w-3.5 h-3.5" />
                     </button>
@@ -572,7 +572,7 @@ onUnmounted(() => {
                       @click="restoreSnapshot(snap)"
                       :disabled="restoringSnapshotId === snap.id"
                       title="Restore Database Snapshot"
-                      class="p-1.5 rounded-lg text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors disabled:opacity-50"
+                      class="p-1.5 rounded-lg text-primary hover:text-primary-light hover:bg-surface-elevated transition-colors disabled:opacity-50"
                     >
                       <Loader2 v-if="restoringSnapshotId === snap.id" class="w-3.5 h-3.5 animate-spin" />
                       <RotateCcw v-else class="w-3.5 h-3.5" />
@@ -581,7 +581,7 @@ onUnmounted(() => {
                     <button
                       @click="deleteSnapshot(snap)"
                       title="Delete Snapshot"
-                      class="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+                      class="p-1.5 rounded-lg text-status-offline hover:text-rose-400 hover:bg-surface-elevated transition-colors"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
@@ -601,9 +601,9 @@ onUnmounted(() => {
       v-if="showUpdateModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
     >
-      <div class="bg-[#111622] border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="bg-surface-card border border-surface-border rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
         <!-- Modal Header -->
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-[#0e131d]">
+        <div class="p-4 border-b border-surface-border flex items-center justify-between bg-surface-deep">
           <div class="flex items-center gap-2.5">
             <span class="text-xl">🐙</span>
             <div>
@@ -617,34 +617,34 @@ onUnmounted(() => {
           <button
             v-if="isUpdateDone"
             @click="closeUpdateModal"
-            class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+            class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-surface-elevated transition-colors"
           >
             <X class="w-4 h-4" />
           </button>
         </div>
 
         <!-- Progress Section -->
-        <div class="p-4 border-b border-slate-800 bg-[#0e131d]/50 space-y-2">
+        <div class="p-4 border-b border-surface-border bg-surface-deep/50 space-y-2">
           <div class="flex items-center justify-between text-xs">
             <span class="text-slate-300 font-medium">
               {{ t('admin.system.currentStep') }}: [{{ currentStepNumber }}/{{ totalSteps }}] {{ currentStepTitle }}
             </span>
-            <span class="font-mono font-bold text-cyan-400">{{ currentProgress }}%</span>
+            <span class="font-mono font-bold text-primary">{{ currentProgress }}%</span>
           </div>
 
-          <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+          <div class="w-full h-2 rounded-full bg-surface-card overflow-hidden">
             <div
-              class="h-full bg-cyan-500 transition-all duration-300 ease-out"
+              class="h-full bg-primary transition-all duration-300 ease-out"
               :style="{ width: `${currentProgress}%` }"
             />
           </div>
 
-          <div v-if="isReconnecting" class="pt-1 flex items-center gap-2 text-xs text-amber-400">
+          <div v-if="isReconnecting" class="pt-1 flex items-center gap-2 text-xs text-status-warning">
             <Loader2 class="w-3.5 h-3.5 animate-spin" />
             <span>{{ t('admin.system.reconnecting') }}</span>
           </div>
 
-          <div v-if="isUpdateDone && isUpdateSuccess" class="pt-1 flex items-center gap-2 text-xs text-emerald-400 font-semibold">
+          <div v-if="isUpdateDone && isUpdateSuccess" class="pt-1 flex items-center gap-2 text-xs text-status-online font-semibold">
             <CheckCircle2 class="w-4 h-4" />
             <span>{{ t('admin.system.updateSuccess') }}</span>
           </div>
@@ -653,21 +653,21 @@ onUnmounted(() => {
         <!-- Real-time Terminal Log Window -->
         <div class="p-4 flex-1 flex flex-col min-h-0 space-y-2">
           <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Terminal class="w-3.5 h-3.5 text-cyan-400" />
+            <Terminal class="w-3.5 h-3.5 text-primary" />
             {{ t('admin.system.terminalLog') }}
           </div>
 
           <div
             ref="terminalContainer"
-            class="flex-1 bg-[#070a0f] border border-slate-800/80 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto space-y-1 h-64"
+            class="flex-1 bg-surface-deep border border-surface-border rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto space-y-1 h-64"
           >
             <div v-for="(line, idx) in streamLogs" :key="idx" class="leading-relaxed">
-              <span v-if="line.startsWith('===')" class="text-cyan-400 font-bold">{{ line }}</span>
-              <span v-else-if="line.includes('ERROR') || line.includes('FAILED')" class="text-rose-400 font-semibold">{{ line }}</span>
-              <span v-else-if="line.includes('successfully') || line.includes('✅')" class="text-emerald-400">{{ line }}</span>
+              <span v-if="line.startsWith('===')" class="text-primary font-bold">{{ line }}</span>
+              <span v-else-if="line.includes('ERROR') || line.includes('FAILED')" class="text-status-offline font-semibold">{{ line }}</span>
+              <span v-else-if="line.includes('successfully') || line.includes('✅')" class="text-status-online">{{ line }}</span>
               <span v-else class="text-slate-300">{{ line }}</span>
             </div>
-            <div v-if="!isUpdateDone" class="flex items-center gap-2 text-cyan-400 pt-1">
+            <div v-if="!isUpdateDone" class="flex items-center gap-2 text-primary pt-1">
               <Loader2 class="w-3 h-3 animate-spin" />
               <span class="animate-pulse">_</span>
             </div>
@@ -675,16 +675,16 @@ onUnmounted(() => {
         </div>
 
         <!-- Footer -->
-        <div class="p-4 border-t border-slate-800 bg-[#0e131d] flex items-center justify-between text-xs text-slate-400">
+        <div class="p-4 border-t border-surface-border bg-surface-deep flex items-center justify-between text-xs text-slate-400">
           <div class="flex items-center gap-1.5">
-            <Info class="w-3.5 h-3.5 text-amber-400" />
+            <Info class="w-3.5 h-3.5 text-primary" />
             <span>{{ t('admin.system.doNotClose') }}</span>
           </div>
 
           <button
             v-if="isUpdateDone"
             @click="closeUpdateModal"
-            class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition-colors"
+            class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-surface-elevated hover:bg-surface-card border border-surface-border text-white transition-colors"
           >
             Close
           </button>

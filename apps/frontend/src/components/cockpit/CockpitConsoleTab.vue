@@ -39,17 +39,17 @@ async function initTerminal() {
     fontFamily: 'JetBrains Mono, Menlo, Monaco, Consolas, monospace',
     fontSize: 13,
     theme: {
-      background: '#0b0f17',
-      foreground: '#c9d1d9',
-      cursor: '#3b82f6',
-      black: '#484f58',
-      red: '#ef4444',
-      green: '#10b981',
+      background: '#27282b',
+      foreground: '#f3f4f6',
+      cursor: '#db982b',
+      black: '#494a50',
+      red: '#f87171',
+      green: '#3ecf8e',
       yellow: '#f59e0b',
-      blue: '#3b82f6',
-      magenta: '#a855f7',
-      cyan: '#06b6d4',
-      white: '#f1f5f9',
+      blue: '#60a5fa',
+      magenta: '#a78bfa',
+      cyan: '#38bdf8',
+      white: '#f3f4f6',
     },
     convertEol: true,
     scrollback: 2500,
@@ -62,7 +62,7 @@ async function initTerminal() {
   await nextTick();
   fitAddon.fit();
 
-  term.writeln('\x1b[38;5;39m[OctopusPanel Operations Deck]\x1b[0m Initializing secure xterm.js TTY session...');
+  term.writeln('\x1b[38;2;219;152;43m[OctopusPanel Operations Deck]\x1b[0m Initializing secure xterm.js TTY session...');
 
   await connectSocket();
 }
@@ -272,69 +272,69 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="flex flex-col bg-[#0b0f17] border border-slate-800 rounded-xl overflow-hidden shadow-2xl transition-all"
+    class="flex flex-col bg-surface-deep border border-surface-border rounded-xl overflow-hidden shadow-2xl transition-all"
     :class="isFullscreen ? 'fixed inset-0 z-50 rounded-none h-screen w-screen border-none' : 'h-[580px]'"
   >
     <!-- Top Toolbar -->
-    <div class="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#111622] border-b border-slate-800 gap-2">
+    <div class="flex flex-wrap items-center justify-between px-4 py-2.5 bg-surface-card border-b border-surface-border gap-2">
       <!-- Status & TTY title -->
       <div class="flex items-center space-x-3">
-        <TerminalIcon class="w-4 h-4 text-blue-400" />
+        <TerminalIcon class="w-4 h-4 text-primary" />
         <span class="text-xs font-mono font-semibold text-slate-200">Interactive TTY Console</span>
         <span
           class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
-          :class="isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
+          :class="isConnected ? 'bg-status-online/15 text-status-online border border-status-online/30' : 'bg-status-offline/15 text-status-offline border border-status-offline/30'"
         >
-          <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></span>
+          <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="isConnected ? 'bg-status-online animate-pulse' : 'bg-status-offline'"></span>
           {{ isConnected ? 'Connected' : 'Offline' }}
         </span>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex items-center space-x-2">
-        <!-- Power Action Bar -->
+        <!-- Power Action Bar (Tactile) -->
         <button
           @click="handlePower(PowerAction.START)"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+          class="flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg bg-status-online hover:bg-emerald-600 text-slate-950 transition-all active:scale-[0.98]"
         >
           <Power class="w-3.5 h-3.5 mr-1" />
           {{ t('servers.start') }}
         </button>
         <button
           @click="handlePower(PowerAction.RESTART)"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+          class="flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all active:scale-[0.98]"
         >
           <RotateCcw class="w-3.5 h-3.5 mr-1" />
           {{ t('servers.restart') }}
         </button>
         <button
           @click="handlePower(PowerAction.STOP)"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-rose-700 hover:bg-rose-600 text-white transition-colors"
+          class="flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg bg-status-offline hover:bg-rose-600 text-slate-950 transition-all active:scale-[0.98]"
         >
           <Square class="w-3.5 h-3.5 mr-1" />
           {{ t('servers.stop') }}
         </button>
         <button
           @click="showKillModal = true"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border border-rose-800 text-rose-400 hover:bg-rose-950 transition-colors"
+          class="flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg border border-status-offline/40 text-status-offline hover:bg-status-offline/10 transition-all active:scale-[0.98]"
           title="Force Kill (SIGKILL)"
         >
           <Skull class="w-3.5 h-3.5 mr-1" />
           Kill
         </button>
 
-        <div class="h-4 w-px bg-slate-700 mx-1"></div>
+        <div class="h-4 w-px bg-surface-border mx-1"></div>
 
         <button
           @click="clearConsole"
-          class="p-1.5 text-slate-400 hover:text-slate-200 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
+          class="p-1.5 text-slate-400 hover:text-slate-200 border border-surface-border rounded-lg hover:bg-surface-elevated transition-colors"
           title="Clear Console"
         >
           <Trash2 class="w-3.5 h-3.5" />
         </button>
         <button
           @click="toggleFullscreen"
-          class="p-1.5 text-slate-400 hover:text-white border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
+          class="p-1.5 text-slate-400 hover:text-white border border-surface-border rounded-lg hover:bg-surface-elevated transition-colors"
           :title="isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'"
         >
           <Minimize2 v-if="isFullscreen" class="w-3.5 h-3.5" />
@@ -344,24 +344,24 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Terminal Canvas -->
-    <div ref="terminalContainer" class="flex-1 p-3 overflow-hidden bg-[#0b0f17]"></div>
+    <div ref="terminalContainer" class="flex-1 p-3 overflow-hidden bg-surface-deep"></div>
 
     <!-- Quick Command Preset Badges -->
-    <div class="flex items-center space-x-2 px-3 py-1.5 bg-[#0f141f] border-t border-slate-800/80 overflow-x-auto text-[11px] font-mono">
-      <span class="text-slate-500 text-[10px] uppercase font-sans">Quick Presets:</span>
+    <div class="flex items-center space-x-2 px-3 py-1.5 bg-surface-deep border-t border-surface-border/60 overflow-x-auto text-[11px] font-mono">
+      <span class="text-slate-400 text-[10px] uppercase font-sans">Quick Presets:</span>
       <button
         v-for="cmd in ['help', 'list', 'tps', 'version', 'say Hello world!']"
         :key="cmd"
         @click="sendCommand(cmd)"
-        class="px-2 py-0.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 rounded border border-slate-700/60 hover:text-blue-400 transition-colors"
+        class="px-2 py-0.5 bg-surface-card hover:bg-surface-elevated text-slate-300 rounded border border-surface-border hover:text-primary-light transition-colors"
       >
         /{{ cmd }}
       </button>
     </div>
 
     <!-- Command Input Bar -->
-    <div class="flex items-center p-2.5 bg-[#111622] border-t border-slate-800">
-      <span class="text-blue-400 font-mono text-sm px-2 select-none font-bold">&gt;</span>
+    <div class="flex items-center p-2.5 bg-surface-card border-t border-surface-border">
+      <span class="text-primary font-mono text-sm px-2 select-none font-bold">&gt;</span>
       <input
         v-model="commandInput"
         @keyup.enter="sendCommand()"
@@ -369,11 +369,11 @@ onBeforeUnmount(() => {
         @keydown.down.prevent="navigateHistory('down')"
         type="text"
         placeholder="Type a console command... (Use ↑/↓ for history)"
-        class="flex-1 bg-transparent border-none text-slate-200 font-mono text-xs focus:outline-none placeholder-slate-500"
+        class="flex-1 bg-surface-deep border border-surface-border rounded-lg px-3 py-1.5 text-slate-100 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder-slate-500 mr-2"
       />
       <button
         @click="sendCommand()"
-        class="flex items-center px-3 py-1 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+        class="flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <Send class="w-3.5 h-3.5 mr-1" />
         Send
@@ -381,10 +381,10 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Force Kill Confirmation Modal -->
-    <div v-if="showKillModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-rose-600/40 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-          <div class="flex items-center space-x-2 text-rose-500">
+    <div v-if="showKillModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-surface-card border border-status-offline/50 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
+          <div class="flex items-center space-x-2 text-status-offline">
             <AlertTriangle class="w-5 h-5" />
             <h3 class="text-sm font-bold text-white">Confirm Force Kill</h3>
           </div>
@@ -397,11 +397,11 @@ onBeforeUnmount(() => {
           Sending a SIGKILL immediately aborts the container process without graceful shutdown. Unsaved world data or database transactions might be lost or corrupted.
         </p>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-800">
-          <button @click="showKillModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-3 border-t border-surface-border">
+          <button @click="showKillModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
-          <button @click="confirmKill" class="px-3.5 py-1.5 text-xs bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-lg flex items-center">
+          <button @click="confirmKill" class="px-3.5 py-1.5 text-xs bg-status-offline hover:bg-rose-600 text-slate-950 font-semibold rounded-lg flex items-center active:scale-[0.98]">
             <Skull class="w-3.5 h-3.5 mr-1.5" />
             Force Kill Now
           </button>

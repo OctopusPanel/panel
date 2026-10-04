@@ -29,7 +29,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="space-y-4">
-    <div v-if="errorMessage" class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+    <div v-if="errorMessage" class="p-3 rounded-lg bg-status-offline/10 border border-status-offline/20 text-status-offline text-xs">
       {{ errorMessage }}
     </div>
 
@@ -39,7 +39,7 @@ async function handleSubmit() {
         v-model="identifier"
         type="text"
         required
-        class="w-full bg-[#0a0d14] border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+        class="w-full bg-surface-deep border border-surface-border rounded-lg px-3 py-2 text-xs text-slate-100 outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
         placeholder="admin@octopuspanel.local"
       />
     </div>
@@ -50,7 +50,7 @@ async function handleSubmit() {
         v-model="password"
         type="password"
         required
-        class="w-full bg-[#0a0d14] border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+        class="w-full bg-surface-deep border border-surface-border rounded-lg px-3 py-2 text-xs text-slate-100 outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
         placeholder="••••••••"
       />
     </div>
@@ -58,14 +58,14 @@ async function handleSubmit() {
     <button
       type="submit"
       :disabled="authStore.isLoading"
-      class="w-full mt-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+      class="w-full mt-2 py-2.5 px-4 bg-primary hover:bg-primary-dark text-slate-950 font-semibold text-xs rounded-lg transition-all shadow-md active:scale-[0.98] flex items-center justify-center disabled:opacity-50"
     >
       <span v-if="authStore.isLoading">{{ t('common.loading') }}</span>
       <span v-else>{{ t('auth.loginButton') }}</span>
     </button>
 
-    <div class="text-center pt-3 border-t border-slate-800">
-      <router-link to="/auth/register" class="text-xs text-slate-400 hover:text-blue-400 transition-colors">
+    <div class="text-center pt-3 border-t border-surface-border">
+      <router-link to="/auth/register" class="text-xs text-slate-400 hover:text-primary-light transition-colors">
         {{ t('auth.noAccount') }} {{ t('auth.registerButton') }}
       </router-link>
     </div>

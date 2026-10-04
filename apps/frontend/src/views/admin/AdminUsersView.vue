@@ -58,7 +58,7 @@ onMounted(() => {
 
       <button
         @click="showCreateModal = true"
-        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <Plus class="w-4 h-4 mr-2" />
         {{ t('admin.users.createUser') }}
@@ -66,13 +66,13 @@ onMounted(() => {
     </div>
 
     <!-- Users Table -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-500">
+    <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
         {{ t('common.loading') }}
       </div>
 
       <table v-else class="w-full text-left text-xs font-mono">
-        <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-3 px-4">{{ t('admin.users.username') }}</th>
             <th class="py-3 px-4">{{ t('admin.users.email') }}</th>
@@ -81,17 +81,17 @@ onMounted(() => {
             <th class="py-3 px-4 text-right">{{ t('common.actions') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60">
-          <tr v-for="u in users" :key="u.id" class="hover:bg-slate-800/30 transition-colors">
-            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center">
-              <Users class="w-4 h-4 text-amber-400 mr-2" />
+        <tbody class="divide-y divide-surface-border/50">
+          <tr v-for="u in users" :key="u.id" class="hover:bg-surface-elevated/40 transition-colors">
+            <td class="py-3 px-4 font-semibold text-slate-200 flex items-center font-sans">
+              <Users class="w-4 h-4 text-primary mr-2" />
               {{ u.username }}
             </td>
             <td class="py-3 px-4 text-slate-400">{{ u.email }}</td>
             <td class="py-3 px-4">
               <span
-                class="px-2 py-0.5 rounded text-[10px] uppercase font-semibold"
-                :class="u.role === 'admin' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-slate-700/40 text-slate-300'"
+                class="px-2 py-0.5 rounded text-[10px] uppercase font-semibold border"
+                :class="u.role === 'admin' ? 'bg-primary/10 text-primary-light border-primary/25' : 'bg-surface-deep text-slate-300 border-surface-border'"
               >
                 {{ u.role }}
               </span>
@@ -100,7 +100,7 @@ onMounted(() => {
             <td class="py-3 px-4 text-right">
               <button
                 @click="deleteUser(u.id)"
-                class="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1.5 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
               >
                 <Trash2 class="w-3.5 h-3.5" />
               </button>
@@ -111,40 +111,40 @@ onMounted(() => {
     </div>
 
     <!-- Create User Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showCreateModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <h3 class="text-sm font-semibold text-white">{{ t('admin.users.createUser') }}</h3>
-          <button @click="showCreateModal = false" class="text-slate-400 hover:text-white">
+          <button @click="showCreateModal = false" class="text-slate-400 hover:text-white transition-colors">
             <X class="w-4 h-4" />
           </button>
         </div>
 
         <div class="space-y-3 text-xs">
           <div>
-            <label class="block text-slate-400 mb-1">{{ t('admin.users.email') }}</label>
-            <input v-model="userForm.email" type="email" placeholder="user@example.com" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none" />
+            <label class="block text-slate-400 mb-1 font-medium">{{ t('admin.users.email') }}</label>
+            <input v-model="userForm.email" type="email" placeholder="user@example.com" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors" />
           </div>
           <div>
-            <label class="block text-slate-400 mb-1">{{ t('admin.users.username') }}</label>
-            <input v-model="userForm.username" type="text" placeholder="username" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none" />
+            <label class="block text-slate-400 mb-1 font-medium">{{ t('admin.users.username') }}</label>
+            <input v-model="userForm.username" type="text" placeholder="username" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors" />
           </div>
           <div>
-            <label class="block text-slate-400 mb-1">Password</label>
-            <input v-model="userForm.password" type="password" placeholder="••••••••" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none" />
+            <label class="block text-slate-400 mb-1 font-medium">Password</label>
+            <input v-model="userForm.password" type="password" placeholder="••••••••" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors" />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-slate-400 mb-1">{{ t('admin.users.role') }}</label>
-              <select v-model="userForm.role" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none">
+              <label class="block text-slate-400 mb-1 font-medium">{{ t('admin.users.role') }}</label>
+              <select v-model="userForm.role" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors">
                 <option value="user">User</option>
                 <option value="support">Support</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">{{ t('admin.users.language') }}</label>
-              <select v-model="userForm.languagePreference" class="w-full bg-[#0d1117] border border-slate-700 rounded-lg p-2 text-slate-200 outline-none">
+              <label class="block text-slate-400 mb-1 font-medium">{{ t('admin.users.language') }}</label>
+              <select v-model="userForm.languagePreference" class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-slate-200 outline-none focus:border-primary transition-colors">
                 <option value="en">English (EN)</option>
                 <option value="de">Deutsch (DE)</option>
               </select>
@@ -152,11 +152,11 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-800">
-          <button @click="showCreateModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-3 border-t border-surface-border">
+          <button @click="showCreateModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createUser" class="px-3.5 py-1.5 text-xs bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg">
+          <button @click="createUser" class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md">
             {{ t('common.create') }}
           </button>
         </div>

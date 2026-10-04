@@ -145,8 +145,8 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <h3 class="text-sm font-bold text-white flex items-center">
-          <Users class="w-4 h-4 text-blue-400 mr-2" />
-          Team & Sub-User Access Control
+          <Users class="w-4 h-4 text-primary mr-2" />
+          Team &amp; Sub-User Access Control
         </h3>
         <p class="text-xs text-slate-400 mt-0.5">
           Delegate server administration with granular capability tags (Console, Files, Power, Backups, Databases).
@@ -155,7 +155,7 @@ onMounted(() => {
 
       <button
         @click="showInviteModal = true"
-        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-500/10"
+        class="flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-slate-950 transition-all shadow-md active:scale-[0.98]"
       >
         <UserPlus class="w-3.5 h-3.5 mr-1.5" />
         Invite Collaborator
@@ -163,17 +163,17 @@ onMounted(() => {
     </div>
 
     <!-- Subusers Table -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-500">
+    <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
+      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
         Loading collaborators roster...
       </div>
 
-      <div v-else-if="subusers.length === 0" class="p-12 text-center text-xs text-slate-500">
+      <div v-else-if="subusers.length === 0" class="p-12 text-center text-xs text-slate-400">
         No external collaborators granted access yet.
       </div>
 
       <table v-else class="w-full text-left text-xs">
-        <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-3 px-4">User</th>
             <th class="py-3 px-4">Email</th>
@@ -182,12 +182,12 @@ onMounted(() => {
             <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60 font-mono">
-          <tr v-for="user in subusers" :key="user.id" class="hover:bg-slate-800/30 transition-colors">
+        <tbody class="divide-y divide-surface-border/50 font-mono">
+          <tr v-for="user in subusers" :key="user.id" class="hover:bg-surface-elevated/40 transition-colors">
             <!-- User -->
             <td class="py-3 px-4 text-slate-200 font-sans font-semibold">
               <div class="flex items-center space-x-2.5">
-                <img :src="user.avatarUrl" class="w-6 h-6 rounded-full border border-slate-700 object-cover" />
+                <img :src="user.avatarUrl" class="w-6 h-6 rounded-full border border-surface-border object-cover" />
                 <span>{{ user.username }}</span>
               </div>
             </td>
@@ -203,13 +203,13 @@ onMounted(() => {
                 <span
                   v-for="perm in user.permissions.slice(0, 4)"
                   :key="perm"
-                  class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-mono"
+                  class="bg-primary/10 text-primary-light border border-primary/25 px-2 py-0.5 rounded text-[10px] font-mono"
                 >
                   {{ perm }}
                 </span>
                 <span
                   v-if="user.permissions.length > 4"
-                  class="bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded text-[10px]"
+                  class="bg-surface-deep border border-surface-border text-slate-400 px-1.5 py-0.5 rounded text-[10px]"
                 >
                   +{{ user.permissions.length - 4 }} more
                 </span>
@@ -225,7 +225,7 @@ onMounted(() => {
             <td class="py-3 px-4 text-right space-x-1.5 font-sans">
               <button
                 @click="removeSubuser(user.id)"
-                class="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
+                class="p-1.5 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
                 title="Revoke Access"
               >
                 <Trash2 class="w-3.5 h-3.5" />
@@ -237,14 +237,14 @@ onMounted(() => {
     </div>
 
     <!-- Invite Modal with Granular Permission Checkboxes -->
-    <div v-if="showInviteModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div v-if="showInviteModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <div class="flex items-center space-x-2">
-            <UserPlus class="w-4 h-4 text-blue-400" />
+            <UserPlus class="w-4 h-4 text-primary" />
             <h3 class="text-sm font-semibold text-white">Invite Collaborator</h3>
           </div>
-          <button @click="showInviteModal = false" class="text-slate-400 hover:text-white">
+          <button @click="showInviteModal = false" class="text-slate-400 hover:text-white transition-colors">
             <X class="w-4 h-4" />
           </button>
         </div>
@@ -255,7 +255,7 @@ onMounted(() => {
             v-model="inviteEmail"
             type="email"
             placeholder="colleague@example.com"
-            class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-full bg-surface-deep border border-surface-border rounded-lg p-2.5 text-xs text-slate-200 outline-none focus:border-primary transition-colors"
           />
         </div>
 
@@ -268,17 +268,17 @@ onMounted(() => {
           <div
             v-for="cat in permissionCategories"
             :key="cat.name"
-            class="bg-[#0b0f17] border border-slate-800 rounded-lg p-3 space-y-2.5"
+            class="bg-surface-deep border border-surface-border rounded-lg p-3 space-y-2.5"
           >
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+            <div class="flex items-center justify-between border-b border-surface-border pb-1.5">
               <span class="text-xs font-bold text-white flex items-center">
-                <component :is="cat.icon" class="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+                <component :is="cat.icon" class="w-3.5 h-3.5 mr-1.5 text-primary" />
                 {{ cat.name }}
               </span>
               <button
                 type="button"
                 @click="toggleCategory(cat)"
-                class="text-[10px] text-blue-400 hover:underline"
+                class="text-[10px] text-primary-light hover:underline font-semibold"
               >
                 Toggle All
               </button>
@@ -288,13 +288,13 @@ onMounted(() => {
               <label
                 v-for="p in cat.permissions"
                 :key="p.key"
-                class="flex items-center space-x-2 p-1.5 rounded hover:bg-slate-800/50 cursor-pointer"
+                class="flex items-center space-x-2 p-1.5 rounded hover:bg-surface-elevated cursor-pointer transition-colors"
               >
                 <input
                   type="checkbox"
                   :checked="selectedPermissions.includes(p.key)"
                   @change="togglePermission(p.key)"
-                  class="rounded bg-[#111622] border-slate-700 text-blue-600 focus:ring-0"
+                  class="rounded bg-surface-card border-surface-border text-primary focus:ring-0"
                 />
                 <span class="text-slate-300">{{ p.label }}</span>
               </label>
@@ -302,13 +302,13 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-800">
-          <button @click="showInviteModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-3 border-t border-surface-border">
+          <button @click="showInviteModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             Cancel
           </button>
           <button
             @click="inviteSubuser"
-            class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg"
+            class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md"
           >
             Send Invitation
           </button>

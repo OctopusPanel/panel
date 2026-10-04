@@ -74,14 +74,14 @@ const filteredServers = computed(() => {
 function getStatusBadge(status: string) {
   switch (status) {
     case ServerStatus.RUNNING:
-      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      return 'bg-status-online/15 text-status-online border-status-online/30';
     case ServerStatus.STARTING:
-      return 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse';
+      return 'bg-primary/15 text-primary-light border-primary/30 animate-pulse';
     case ServerStatus.STOPPING:
     case ServerStatus.SUSPENDED:
-      return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      return 'bg-status-warning/15 text-status-warning border-status-warning/30';
     default:
-      return 'bg-slate-800 text-slate-400 border-slate-700/60';
+      return 'bg-surface-deep text-slate-400 border-surface-border';
   }
 }
 </script>
@@ -92,8 +92,8 @@ function getStatusBadge(status: string) {
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center">
-          <Activity class="w-5 h-5 text-blue-500 mr-2.5" />
-          Operations Center & Server Fleet
+          <Activity class="w-5 h-5 text-primary mr-2.5" />
+          Operations Center &amp; Server Fleet
         </h1>
         <p class="text-xs text-slate-400 mt-1">
           Real-time cluster telemetry, high-density container roster, and instant workload controls.
@@ -105,47 +105,47 @@ function getStatusBadge(status: string) {
     <ModuleSlot slot-name="dashboard:widgets" />
 
     <!-- Live Search, Status Filters & Sort Controls Bar -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl p-3.5 shadow-xl flex flex-wrap items-center justify-between gap-3">
+    <div class="bg-surface-card border border-surface-border rounded-xl p-3.5 shadow-xl flex flex-wrap items-center justify-between gap-3">
       <!-- Search Input -->
       <div class="relative flex-1 min-w-[240px]">
-        <Search class="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
+        <Search class="w-4 h-4 absolute left-3 top-3 text-slate-400" />
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Search servers by name, #ID, node, or IP address..."
-          class="w-full bg-[#0b0f17] border border-slate-700/80 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 placeholder-slate-500 font-mono"
+          class="w-full bg-surface-deep border border-surface-border rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 outline-none focus:border-primary placeholder-slate-500 font-mono transition-colors"
         />
       </div>
 
       <!-- Status Filter Pills -->
-      <div class="flex items-center space-x-1.5 bg-[#0b0f17] p-1 rounded-lg border border-slate-800 text-xs">
+      <div class="flex items-center space-x-1.5 bg-surface-deep p-1 rounded-lg border border-surface-border text-xs">
         <button
           @click="statusFilter = 'all'"
           class="px-2.5 py-1 rounded-md font-medium transition-colors"
-          :class="statusFilter === 'all' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'"
+          :class="statusFilter === 'all' ? 'bg-primary text-slate-950 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'"
         >
           All ({{ totalServers }})
         </button>
         <button
           @click="statusFilter = 'running'"
           class="px-2.5 py-1 rounded-md font-medium transition-colors flex items-center"
-          :class="statusFilter === 'running' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-emerald-400'"
+          :class="statusFilter === 'running' ? 'bg-status-online/20 text-status-online border border-status-online/40 font-semibold' : 'text-slate-400 hover:text-status-online'"
         >
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-status-online mr-1.5"></span>
           Running ({{ runningCount }})
         </button>
         <button
           @click="statusFilter = 'starting'"
           class="px-2.5 py-1 rounded-md font-medium transition-colors flex items-center"
-          :class="statusFilter === 'starting' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-amber-400'"
+          :class="statusFilter === 'starting' ? 'bg-primary/20 text-primary-light border border-primary/40 font-semibold' : 'text-slate-400 hover:text-primary'"
         >
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>
           Starting ({{ startingCount }})
         </button>
         <button
           @click="statusFilter = 'offline'"
           class="px-2.5 py-1 rounded-md font-medium transition-colors flex items-center"
-          :class="statusFilter === 'offline' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'"
+          :class="statusFilter === 'offline' ? 'bg-surface-elevated text-slate-200 border border-surface-border font-semibold' : 'text-slate-400 hover:text-slate-200'"
         >
           <span class="w-1.5 h-1.5 rounded-full bg-slate-500 mr-1.5"></span>
           Offline ({{ offlineCount }})
@@ -155,12 +155,12 @@ function getStatusBadge(status: string) {
       <!-- Sort Dropdown -->
       <div class="flex items-center space-x-2 text-xs">
         <span class="text-slate-400 flex items-center text-[11px]">
-          <ArrowUpDown class="w-3.5 h-3.5 mr-1 text-slate-500" />
+          <ArrowUpDown class="w-3.5 h-3.5 mr-1 text-slate-400" />
           Sort:
         </span>
         <select
           v-model="sortBy"
-          class="bg-[#0b0f17] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 font-mono outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+          class="bg-surface-deep border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-slate-300 font-mono outline-none focus:border-primary cursor-pointer transition-colors"
         >
           <option value="id">Created Order</option>
           <option value="name">Server Name</option>
@@ -171,22 +171,22 @@ function getStatusBadge(status: string) {
     </div>
 
     <!-- Servers Roster Grid -->
-    <div v-if="serverStore.isLoading" class="p-16 text-center text-xs font-mono text-slate-500">
+    <div v-if="serverStore.isLoading" class="p-16 text-center text-xs font-mono text-slate-400">
       Loading server fleet...
     </div>
 
     <div
       v-else-if="filteredServers.length === 0"
-      class="bg-[#111622] border border-slate-800 rounded-2xl p-12 text-center"
+      class="bg-surface-card border border-surface-border rounded-2xl p-12 text-center shadow-lg"
     >
-      <ServerIcon class="w-12 h-12 text-slate-600 mx-auto mb-3" />
+      <ServerIcon class="w-12 h-12 text-slate-500 mx-auto mb-3" />
       <h3 class="text-sm font-semibold text-slate-200">No servers match your filter</h3>
-      <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto mb-5">
+      <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto mb-5">
         Try adjusting your search query or reset status filter pills.
       </p>
       <button
         @click="searchQuery = ''; statusFilter = 'all'"
-        class="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200"
+        class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg bg-surface-deep hover:bg-surface-elevated text-slate-200 border border-surface-border transition-colors"
       >
         Reset Filters
       </button>
@@ -197,7 +197,7 @@ function getStatusBadge(status: string) {
         v-for="server in filteredServers"
         :key="server.id"
         :to="`/server/${server.uuid}`"
-        class="group bg-[#111622] hover:bg-[#141b2a] border border-slate-800 hover:border-slate-700/80 rounded-xl p-5 transition-all shadow-lg flex flex-col justify-between"
+        class="group bg-surface-card hover:bg-surface-elevated/40 border border-surface-border hover:border-primary/40 rounded-xl p-5 transition-all shadow-lg flex flex-col justify-between"
       >
         <div>
           <!-- Top Row: Name, Identifier & Status Pill with Glow -->
@@ -206,9 +206,9 @@ function getStatusBadge(status: string) {
               <div class="flex items-center space-x-2">
                 <span
                   class="w-2.5 h-2.5 rounded-full shrink-0"
-                  :class="server.status === 'running' ? 'bg-emerald-400 shadow-md shadow-emerald-400/50 animate-pulse' : server.status === 'starting' ? 'bg-amber-400 animate-pulse' : 'bg-slate-600'"
+                  :class="server.status === 'running' ? 'bg-status-online shadow-md shadow-status-online/50 animate-pulse' : server.status === 'starting' ? 'bg-primary animate-pulse' : 'bg-slate-500'"
                 ></span>
-                <h3 class="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
+                <h3 class="text-sm font-bold text-white group-hover:text-primary-light transition-colors line-clamp-1">
                   {{ server.name }}
                 </h3>
               </div>
@@ -234,74 +234,74 @@ function getStatusBadge(status: string) {
           <!-- Embedded Mini Telemetry (CPU & RAM Progress Gauges) -->
           <div class="grid grid-cols-2 gap-2.5 my-4 text-xs font-mono">
             <!-- CPU Gauge -->
-            <div class="bg-[#0b0f17] p-2.5 rounded-lg border border-slate-800/80">
+            <div class="bg-surface-deep p-2.5 rounded-lg border border-surface-border">
               <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                 <span class="flex items-center font-sans font-medium text-slate-300">
-                  <Cpu class="w-3 h-3 mr-1 text-blue-400" />
+                  <Cpu class="w-3 h-3 mr-1 text-primary" />
                   CPU
                 </span>
                 <span class="font-bold text-slate-200">
                   {{ server.status === 'running' ? ((server as any).metrics?.cpuCurrent ?? (server as any).metrics?.resources?.cpuAbsolute ?? 0) : 0 }}%
                 </span>
               </div>
-              <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div class="w-full bg-surface-card h-1.5 rounded-full overflow-hidden">
                 <div
-                  class="h-full rounded-full transition-all duration-500 bg-blue-500"
+                  class="h-full rounded-full transition-all duration-500 bg-primary"
                   :style="{ width: `${server.status === 'running' ? Math.min(100, (((server as any).metrics?.cpuCurrent ?? (server as any).metrics?.resources?.cpuAbsolute ?? 0) / (server.cpu || 100)) * 100) : 0}%` }"
                 ></div>
               </div>
-              <span class="text-[9px] text-slate-500 block mt-1">/ {{ server.cpu || 100 }}% limit</span>
+              <span class="text-[9px] text-slate-400 block mt-1">/ {{ server.cpu || 100 }}% limit</span>
             </div>
 
             <!-- RAM Gauge -->
-            <div class="bg-[#0b0f17] p-2.5 rounded-lg border border-slate-800/80">
+            <div class="bg-surface-deep p-2.5 rounded-lg border border-surface-border">
               <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                 <span class="flex items-center font-sans font-medium text-slate-300">
-                  <Database class="w-3 h-3 mr-1 text-purple-400" />
+                  <Database class="w-3 h-3 mr-1 text-[#a78bfa]" />
                   RAM
                 </span>
                 <span class="font-bold text-slate-200">
                   {{ server.status === 'running' ? (((server as any).metrics?.memoryCurrentBytes ?? (server as any).metrics?.resources?.memoryBytes ?? 0) / (1024 * 1024 * 1024)).toFixed(1) : '0.0' }} GB
                 </span>
               </div>
-              <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div class="w-full bg-surface-card h-1.5 rounded-full overflow-hidden">
                 <div
-                  class="h-full rounded-full transition-all duration-500 bg-purple-500"
+                  class="h-full rounded-full transition-all duration-500 bg-[#a78bfa]"
                   :style="{ width: `${server.status === 'running' ? Math.min(100, (((server as any).metrics?.memoryCurrentBytes ?? (server as any).metrics?.resources?.memoryBytes ?? 0) / ((server.memory || 1024) * 1024 * 1024)) * 100) : 0}%` }"
                 ></div>
               </div>
-              <span class="text-[9px] text-slate-500 block mt-1">/ {{ ((server.memory || 1024) / 1024).toFixed(1) }} GB quota</span>
+              <span class="text-[9px] text-slate-400 block mt-1">/ {{ ((server.memory || 1024) / 1024).toFixed(1) }} GB quota</span>
             </div>
           </div>
         </div>
 
         <!-- Card Footer: Quick Power & Open Cockpit -->
-        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+        <div class="pt-3 border-t border-surface-border flex items-center justify-between">
           <div class="flex items-center space-x-1" @click.stop.prevent>
             <button
               @click="handlePower(server.id, PowerAction.START, $event)"
-              class="p-1.5 text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-colors"
+              class="p-1.5 text-status-online hover:bg-status-online/15 rounded-md transition-colors"
               title="Start Server"
             >
               <Power class="w-3.5 h-3.5" />
             </button>
             <button
               @click="handlePower(server.id, PowerAction.RESTART, $event)"
-              class="p-1.5 text-amber-400 hover:bg-amber-500/10 rounded-md transition-colors"
+              class="p-1.5 text-primary hover:bg-primary/15 rounded-md transition-colors"
               title="Restart Server"
             >
               <RotateCcw class="w-3.5 h-3.5" />
             </button>
             <button
               @click="handlePower(server.id, PowerAction.STOP, $event)"
-              class="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors"
+              class="p-1.5 text-status-offline hover:bg-status-offline/15 rounded-md transition-colors"
               title="Stop Server"
             >
               <Square class="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <span class="text-xs font-semibold text-slate-400 group-hover:text-blue-400 flex items-center transition-colors">
+          <span class="text-xs font-semibold text-slate-400 group-hover:text-primary flex items-center transition-colors">
             Open Cockpit
             <ArrowRight class="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
           </span>
