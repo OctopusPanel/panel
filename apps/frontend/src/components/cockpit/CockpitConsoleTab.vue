@@ -39,10 +39,10 @@ async function initTerminal() {
     fontFamily: 'JetBrains Mono, Menlo, Monaco, Consolas, monospace',
     fontSize: 13,
     theme: {
-      background: '#27282b',
+      background: '#08090d',
       foreground: '#f3f4f6',
       cursor: '#db982b',
-      black: '#494a50',
+      black: '#1a1d2b',
       red: '#f87171',
       green: '#3ecf8e',
       yellow: '#f59e0b',

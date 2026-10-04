@@ -270,11 +270,11 @@ onMounted(() => {
 <template>
   <div class="space-y-6 max-w-7xl mx-auto pb-12">
     <!-- Header Navigation -->
-    <div class="flex flex-wrap items-center justify-between pb-4 border-b border-slate-800 gap-4">
+    <div class="flex flex-wrap items-center justify-between pb-4 border-b border-surface-border gap-4">
       <div class="flex items-center space-x-3.5">
         <router-link
           to="/admin/nodes"
-          class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+          class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-surface-elevated transition-colors"
           title="Back to Nodes"
         >
           <ArrowLeft class="w-4 h-4" />
@@ -287,17 +287,17 @@ onMounted(() => {
             </h1>
             <span
               class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
-              :class="isOnline ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
+              :class="isOnline ? 'bg-status-online/10 text-status-online border border-status-online/20' : 'bg-status-offline/10 text-status-offline border border-status-offline/20'"
             >
               <span
                 class="w-1.5 h-1.5 rounded-full mr-1.5"
-                :class="isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"
+                :class="isOnline ? 'bg-status-online animate-pulse' : 'bg-status-offline'"
               ></span>
               {{ isOnline ? 'ONLINE' : 'OFFLINE' }}
             </span>
             <span
               v-if="node?.isMaintenance"
-              class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30"
+              class="px-2 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/30"
             >
               MAINTENANCE MODE
             </span>
@@ -310,20 +310,20 @@ onMounted(() => {
 
       <!-- Maintenance Toggle & Refresh -->
       <div class="flex items-center space-x-3">
-        <label class="flex items-center space-x-2 cursor-pointer bg-[#111622] border border-slate-800 px-3 py-1.5 rounded-lg">
+        <label class="flex items-center space-x-2 cursor-pointer bg-surface-card border border-surface-border px-3 py-1.5 rounded-lg">
           <input
             type="checkbox"
             :checked="node?.isMaintenance"
             @change="toggleMaintenance"
             class="sr-only peer"
           />
-          <div class="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
+          <div class="w-8 h-4 bg-surface-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
           <span class="text-xs font-medium text-slate-300">Maintenance Mode</span>
         </label>
 
         <button
           @click="loadNode()"
-          class="p-2 text-slate-400 hover:text-white border border-slate-800 hover:bg-slate-800 rounded-lg transition-colors"
+          class="p-2 text-slate-400 hover:text-white border border-surface-border hover:bg-surface-elevated rounded-lg transition-colors"
           title="Refresh Node Telemetry"
         >
           <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': isLoading }" />
@@ -334,7 +334,7 @@ onMounted(() => {
     <!-- 1. Node Hardware & Health Deck -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- RAM Allocation Meter -->
-      <div class="bg-[#111622] border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col justify-between">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-4 shadow-xl flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-2">
           <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300">
             <Database class="w-4 h-4 text-purple-400 mr-1.5" />
@@ -347,7 +347,7 @@ onMounted(() => {
             <span class="text-lg font-bold text-white">{{ hostMemoryUsedGb }} GB</span>
             <span class="text-xs text-slate-500">/ {{ hostMemoryTotalGb }} GB total</span>
           </div>
-          <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-2">
+          <div class="w-full bg-surface-elevated h-1.5 rounded-full overflow-hidden mt-2">
             <div
               class="h-full rounded-full transition-all duration-500 bg-purple-500"
               :style="{ width: `${hostMemoryPercent}%` }"
@@ -360,7 +360,7 @@ onMounted(() => {
       </div>
 
       <!-- Disk Allocation Meter -->
-      <div class="bg-[#111622] border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col justify-between">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-4 shadow-xl flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-2">
           <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300">
             <HardDrive class="w-4 h-4 text-emerald-400 mr-1.5" />
@@ -373,7 +373,7 @@ onMounted(() => {
             <span class="text-lg font-bold text-white">{{ hostDiskUsedGb }} GB</span>
             <span class="text-xs text-slate-500">/ {{ hostDiskTotalGb }} GB pool</span>
           </div>
-          <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-2">
+          <div class="w-full bg-surface-elevated h-1.5 rounded-full overflow-hidden mt-2">
             <div
               class="h-full rounded-full transition-all duration-500 bg-emerald-500"
               :style="{ width: `${hostDiskPercent}%` }"
@@ -386,22 +386,22 @@ onMounted(() => {
       </div>
 
       <!-- CPU Core Load -->
-      <div class="bg-[#111622] border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col justify-between">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-4 shadow-xl flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-2">
           <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300">
-            <Cpu class="w-4 h-4 text-blue-400 mr-1.5" />
+            <Cpu class="w-4 h-4 text-metric-cpu mr-1.5" />
             Host CPU
           </span>
-          <span class="text-xs font-mono font-bold text-blue-400">{{ hostCpuCores }}</span>
+          <span class="text-xs font-mono font-bold text-metric-cpu">{{ hostCpuCores }}</span>
         </div>
         <div class="font-mono">
-          <div class="bg-[#0b0f17] p-2 rounded border border-slate-800 my-1 flex items-center justify-between">
+          <div class="bg-surface-deep p-2 rounded border border-surface-border my-1 flex items-center justify-between">
             <span class="text-xs text-slate-400">Host Usage:</span>
-            <span class="text-sm font-bold text-blue-400">{{ hostCpuUsagePct || '0.0%' }}</span>
+            <span class="text-sm font-bold text-metric-cpu">{{ hostCpuUsagePct || '0.0%' }}</span>
           </div>
-          <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-1.5">
+          <div class="w-full bg-surface-elevated h-1.5 rounded-full overflow-hidden mt-1.5">
             <div
-              class="h-full rounded-full transition-all duration-500 bg-blue-500"
+              class="h-full rounded-full transition-all duration-500 bg-primary"
               :style="{ width: `${Math.min(100, Math.max(0, parseFloat(hostCpuUsagePct || '0')))}%` }"
             ></div>
           </div>
@@ -410,16 +410,16 @@ onMounted(() => {
       </div>
 
       <!-- Kernel, Daemon & OS Details -->
-      <div class="bg-[#111622] border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col justify-between font-mono text-xs">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-4 shadow-xl flex flex-col justify-between font-mono text-xs">
         <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300 font-sans mb-1">
-          <Activity class="w-4 h-4 text-amber-400 mr-1.5" />
+          <Activity class="w-4 h-4 text-primary mr-1.5" />
           Runtime Environment
         </span>
         <div class="space-y-1 text-[11px]">
           <div class="truncate text-slate-300" :title="hostOs"><span class="text-slate-500">OS:</span> {{ hostOs }}</div>
           <div class="truncate text-slate-300" :title="hostKernel"><span class="text-slate-500">Kernel:</span> {{ hostKernel }}</div>
           <div class="truncate text-slate-300" :title="daemonVersion"><span class="text-slate-500">Daemon:</span> {{ daemonVersion }}</div>
-          <div class="text-emerald-400 flex items-center">
+          <div class="text-status-online flex items-center">
             <span class="text-slate-500 mr-1">Cgroups:</span> v2 Enabled
           </div>
         </div>
@@ -427,25 +427,25 @@ onMounted(() => {
     </div>
 
     <!-- 2. Container Roster on this Node -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl overflow-hidden shadow-xl space-y-3 p-5">
+    <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl space-y-3 p-5">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-sm font-bold text-white flex items-center">
-            <ServerIcon class="w-4 h-4 text-blue-400 mr-2" />
+            <ServerIcon class="w-4 h-4 text-primary mr-2" />
             Containers Running on {{ node?.name }}
           </h3>
           <p class="text-xs text-slate-400 mt-0.5">
             Real-time process status, CPU/RAM utilization, and instant power controls.
           </p>
         </div>
-        <span class="text-xs font-mono text-slate-400 bg-slate-800 px-2.5 py-1 rounded-md">
+        <span class="text-xs font-mono text-slate-400 bg-surface-elevated px-2.5 py-1 rounded-md">
           {{ node?.servers?.length || 0 }} Containers Bound
         </span>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-[#0b0f17] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+          <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
             <tr>
               <th class="py-2.5 px-3">Container / Name</th>
               <th class="py-2.5 px-3">Port</th>
@@ -455,10 +455,10 @@ onMounted(() => {
               <th class="py-2.5 px-3 text-right">Quick Power & Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-800/60 font-mono">
-            <tr v-for="srv in node?.servers" :key="srv.id" class="hover:bg-slate-800/30 transition-colors">
+          <tbody class="divide-y border-surface-border/60 font-mono">
+            <tr v-for="srv in node?.servers" :key="srv.id" class="hover:bg-surface-elevated/40 transition-colors">
               <td class="py-2.5 px-3 font-sans">
-                <router-link :to="`/server/${srv.uuid}`" class="font-bold text-white hover:text-blue-400 transition-colors flex items-center space-x-1.5">
+                <router-link :to="`/server/${srv.uuid}`" class="font-bold text-white hover:text-primary transition-colors flex items-center space-x-1.5">
                   <span>{{ srv.name }}</span>
                   <ExternalLink class="w-3 h-3 text-slate-500" />
                 </router-link>
@@ -467,16 +467,16 @@ onMounted(() => {
               <td class="py-2.5 px-3 text-slate-300">
                 {{ srv.allocation?.port || 25565 }}
               </td>
-              <td class="py-2.5 px-3 text-blue-400">
+              <td class="py-2.5 px-3 text-metric-cpu">
                 {{ srv.status === 'running' ? (srv.metrics?.cpuCurrent ?? 18.4) : 0 }}% / {{ srv.cpu }}%
               </td>
-              <td class="py-2.5 px-3 text-purple-400">
+              <td class="py-2.5 px-3 text-metric-memory">
                 {{ srv.memory }} MB
               </td>
               <td class="py-2.5 px-3 font-sans">
                 <span
                   class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                  :class="srv.status === 'running' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400'"
+                  :class="srv.status === 'running' ? 'bg-status-online/10 text-status-online border border-status-online/20' : 'bg-surface-elevated text-slate-400'"
                 >
                   {{ srv.status }}
                 </span>
@@ -484,14 +484,14 @@ onMounted(() => {
               <td class="py-2.5 px-3 text-right space-x-1" @click.stop>
                 <button
                   @click="handleServerPower(srv.id, PowerAction.START)"
-                  class="p-1 text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors"
+                  class="p-1 text-status-online hover:bg-status-online/10 rounded transition-colors"
                   title="Start"
                 >
                   <Power class="w-3.5 h-3.5" />
                 </button>
                 <button
                   @click="handleServerPower(srv.id, PowerAction.RESTART)"
-                  class="p-1 text-amber-400 hover:bg-amber-500/10 rounded transition-colors"
+                  class="p-1 text-primary hover:bg-primary/10 rounded transition-colors"
                   title="Restart"
                 >
                   <RotateCcw class="w-3.5 h-3.5" />
@@ -511,11 +511,11 @@ onMounted(() => {
     </div>
 
     <!-- 3. Node Port Allocation Pool & Batch Port Generator -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
+    <div class="bg-surface-card border border-surface-border rounded-xl p-5 shadow-xl space-y-4">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-sm font-bold text-white flex items-center">
-            <Radio class="w-4 h-4 text-emerald-400 mr-2" />
+            <Radio class="w-4 h-4 text-primary mr-2" />
             Node Port Allocation Pool
           </h3>
           <p class="text-xs text-slate-400 mt-0.5">
@@ -525,24 +525,24 @@ onMounted(() => {
 
         <button
           @click="showRangeModal = true"
-          class="flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+          class="flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-black transition-colors"
         >
           <Plus class="w-3.5 h-3.5 mr-1.5" />
           Batch Port Range Generator
         </button>
       </div>
 
-      <div class="flex flex-wrap gap-2 pt-1 font-mono text-xs max-h-56 overflow-y-auto p-1 bg-[#0b0f17] rounded-xl border border-slate-800">
+      <div class="flex flex-wrap gap-2 pt-1 font-mono text-xs max-h-56 overflow-y-auto p-1 bg-surface-deep rounded-xl border border-surface-border">
         <div
           v-for="alloc in node?.allocations"
           :key="alloc.id"
           class="px-2.5 py-1.5 rounded-lg border text-xs flex items-center space-x-2"
-          :class="alloc.serverId ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' : 'bg-slate-800/40 border-slate-700/60 text-slate-400'"
+          :class="alloc.serverId ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-surface-elevated/40 border-surface-border text-slate-400'"
         >
           <span>{{ alloc.port }}</span>
           <span
             class="text-[9px] px-1 py-0.2 rounded uppercase"
-            :class="alloc.serverId ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'"
+            :class="alloc.serverId ? 'bg-primary text-black font-semibold' : 'bg-surface-elevated text-slate-300'"
           >
             {{ alloc.serverId ? 'Assigned' : 'Free' }}
           </span>
@@ -551,15 +551,15 @@ onMounted(() => {
     </div>
 
     <!-- 4. Daemon Setup & Node Token Management -->
-    <div class="bg-[#111622] border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div class="bg-surface-card border border-surface-border rounded-xl p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-surface-border">
         <h3 class="text-sm font-bold text-white flex items-center">
-          <Terminal class="w-4 h-4 text-amber-400 mr-2" />
+          <Terminal class="w-4 h-4 text-primary mr-2" />
           Tentacle Host Daemon Setup & Secrets
         </h3>
         <button
           @click="regenerateToken"
-          class="text-xs text-amber-400 hover:text-amber-300 flex items-center font-medium"
+          class="text-xs text-primary hover:text-primary-light flex items-center font-medium"
         >
           <RotateCcw class="w-3.5 h-3.5 mr-1" />
           Regenerate Node Token
@@ -575,21 +575,21 @@ onMounted(() => {
           Run this single command via SSH on a fresh Ubuntu/Debian/RHEL server to automatically pull Docker and launch Tentacle daemon:
         </p>
 
-        <div class="bg-[#0b0f17] border border-slate-800 rounded-lg p-3 relative group font-mono text-xs text-amber-300 select-all break-all pr-12">
+        <div class="bg-surface-deep border border-surface-border rounded-lg p-3 relative group font-mono text-xs text-primary select-all break-all pr-12">
           {{ setupCommand }}
           <button
             @click="copySetupCommand"
-            class="absolute top-2.5 right-2.5 p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors"
+            class="absolute top-2.5 right-2.5 p-1.5 bg-surface-elevated hover:bg-surface-border text-slate-300 hover:text-white rounded transition-colors"
             title="Copy Command"
           >
-            <Check v-if="copiedCommand" class="w-4 h-4 text-emerald-400" />
+            <Check v-if="copiedCommand" class="w-4 h-4 text-status-online" />
             <Copy v-else class="w-4 h-4" />
           </button>
         </div>
       </div>
 
       <!-- Node Secret Token -->
-      <div class="flex items-center justify-between bg-[#0b0f17] p-2.5 rounded-lg border border-slate-800 font-mono text-xs">
+      <div class="flex items-center justify-between bg-surface-deep p-2.5 rounded-lg border border-surface-border font-mono text-xs">
         <div>
           <span class="text-[10px] text-slate-500 uppercase font-sans block">Node Secret Authentication Token</span>
           <span v-if="node?.token" class="text-slate-200 select-all">{{ node.token }}</span>
@@ -598,10 +598,10 @@ onMounted(() => {
         <button
           v-if="node?.token"
           @click="copyToken"
-          class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+          class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-surface-elevated transition-colors"
           title="Copy Token"
         >
-          <Check v-if="copiedToken" class="w-3.5 h-3.5 text-emerald-400" />
+          <Check v-if="copiedToken" class="w-3.5 h-3.5 text-status-online" />
           <Copy v-else class="w-3.5 h-3.5" />
         </button>
       </div>
@@ -609,8 +609,8 @@ onMounted(() => {
 
     <!-- Batch Port Range Modal -->
     <div v-if="showRangeModal" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <h3 class="text-sm font-semibold text-white">Generate Port Allocations</h3>
           <button @click="showRangeModal = false" class="text-slate-400 hover:text-white">
             <X class="w-4 h-4" />
@@ -623,7 +623,7 @@ onMounted(() => {
             <input
               v-model="rangeIp"
               type="text"
-              class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full bg-surface-deep border border-surface-border rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
@@ -633,7 +633,7 @@ onMounted(() => {
               <input
                 v-model.number="rangeStart"
                 type="number"
-                class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full bg-surface-deep border border-surface-border rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             <div>
@@ -641,7 +641,7 @@ onMounted(() => {
               <input
                 v-model.number="rangeEnd"
                 type="number"
-                class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full bg-surface-deep border border-surface-border rounded-lg p-2 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
@@ -651,14 +651,14 @@ onMounted(() => {
           </p>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
-          <button @click="showRangeModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+        <div class="flex justify-end space-x-2 pt-2 border-t border-surface-border">
+          <button @click="showRangeModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             Cancel
           </button>
           <button
             @click="generatePortRange"
             :disabled="isGenerating"
-            class="px-3.5 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg"
+            class="px-3.5 py-1.5 text-xs bg-primary hover:bg-primary-dark text-black font-semibold rounded-lg transition-colors"
           >
             {{ isGenerating ? 'Generating...' : 'Generate 30+ Ports' }}
           </button>

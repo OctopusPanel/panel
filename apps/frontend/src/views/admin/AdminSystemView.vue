@@ -118,13 +118,7 @@ async function startPanelUpdate() {
   isReconnecting.value = false;
   updateStatusMessage.value = '';
 
-  try {
-    await ApiService.updatePanel(updateInfo.value.latestVersion);
-  } catch (err) {
-    console.error('Update request error:', err);
-  }
-
-  // Subscribe to live event stream
+  // Subscribe to live event stream BEFORE initiating the update
   unsubscribeStream = ApiService.subscribeUpdateStream((event) => {
     if (event.type === 'step') {
       currentStepNumber.value = event.step || 1;
@@ -155,6 +149,23 @@ async function startPanelUpdate() {
       }
     }
   });
+
+  try {
+    const res = (await ApiService.updatePanel(updateInfo.value.latestVersion)) as any;
+    if (res && res.success === false) {
+      const errMsg = res.error || res.message || 'Update initialization failed';
+      streamLogs.value.push(`> ❌ Update failed: ${errMsg}`);
+      isUpdateDone.value = true;
+      isUpdateSuccess.value = false;
+      updateStatusMessage.value = errMsg;
+    }
+  } catch (err: any) {
+    console.error('Update request error:', err);
+    streamLogs.value.push(`> ❌ Error initiating update: ${err?.message || err}`);
+    isUpdateDone.value = true;
+    isUpdateSuccess.value = false;
+    updateStatusMessage.value = err?.message || 'Failed to trigger update';
+  }
 }
 
 function closeUpdateModal() {
