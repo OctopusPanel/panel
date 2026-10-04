@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { ApiService } from '../../services/api.js';
 import { ServerDatabase } from '../../services/demo-data.js';
 import { Database, Plus, Copy, Check, Eye, EyeOff, RotateCcw, Trash2, Code2, X } from 'lucide-vue-next';
+import ButtonSpinner from '../ui/ButtonSpinner.vue';
 
 const props = defineProps<{
   serverUuid: string;
@@ -12,6 +13,8 @@ const databases = ref<ServerDatabase[]>([]);
 const isLoading = ref(false);
 const visiblePasswords = ref<Record<string, boolean>>({});
 const copiedField = ref<string | null>(null);
+const deletingDbId = ref<string | null>(null);
+const resettingDbId = ref<string | null>(null);
 
 // Create modal
 const showCreateModal = ref(false);
@@ -53,6 +56,7 @@ async function createDatabase() {
 
 async function resetPassword(db: ServerDatabase) {
   if (!confirm(`Are you sure you want to regenerate the password for database "${db.name}"?`)) return;
+  resettingDbId.value = db.id;
   try {
     const res = await ApiService.post<{ success: boolean; database: ServerDatabase }>(
       `/client/servers/${props.serverUuid}/databases/${db.id}/reset-password`,
@@ -63,16 +67,21 @@ async function resetPassword(db: ServerDatabase) {
     }
   } catch (err) {
     console.error('Failed to reset password:', err);
+  } finally {
+    resettingDbId.value = null;
   }
 }
 
 async function deleteDatabase(dbId: string) {
   if (!confirm('Are you sure you want to delete this database? All tables and data will be dropped permanently.')) return;
+  deletingDbId.value = dbId;
   try {
     await ApiService.delete(`/client/servers/${props.serverUuid}/databases/${dbId}`);
-    loadDatabases();
+    await loadDatabases();
   } catch (err) {
     console.error('Failed to delete database:', err);
+  } finally {
+    deletingDbId.value = null;
   }
 }
 
@@ -240,20 +249,24 @@ onMounted(() => {
           </button>
 
           <div class="flex items-center space-x-2">
-            <button
+            <ButtonSpinner
               @click="resetPassword(db)"
+              :loading="resettingDbId === db.id"
+              spinner-color="muted"
               class="p-1.5 text-slate-400 hover:text-primary rounded hover:bg-surface-elevated transition-colors"
               title="Reset Password"
             >
               <RotateCcw class="w-3.5 h-3.5" />
-            </button>
-            <button
+            </ButtonSpinner>
+            <ButtonSpinner
               @click="deleteDatabase(db.id)"
+              :loading="deletingDbId === db.id"
+              spinner-color="muted"
               class="p-1.5 text-slate-400 hover:text-status-offline rounded hover:bg-surface-elevated transition-colors"
               title="Drop Database"
             >
               <Trash2 class="w-3.5 h-3.5" />
-            </button>
+            </ButtonSpinner>
           </div>
         </div>
       </div>
@@ -309,13 +322,14 @@ onMounted(() => {
           <button @click="showCreateModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             Cancel
           </button>
-          <button
+          <ButtonSpinner
             @click="createDatabase"
-            :disabled="isCreating"
+            :loading="isCreating"
+            spinner-color="white"
             class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md"
           >
-            {{ isCreating ? 'Provisioning...' : 'Provision Database' }}
-          </button>
+            Provision Database
+          </ButtonSpinner>
         </div>
       </div>
     </div>

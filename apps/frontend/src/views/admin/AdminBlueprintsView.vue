@@ -3,11 +3,14 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiService } from '../../services/api.js';
 import { Layers, Upload, Plus, X } from 'lucide-vue-next';
+import SkeletonTable from '../../components/ui/SkeletonTable.vue';
+import ButtonSpinner from '../../components/ui/ButtonSpinner.vue';
 
 const { t } = useI18n();
 
 const blueprints = ref<any[]>([]);
 const isLoading = ref(false);
+const isImporting = ref(false);
 
 const showImportModal = ref(false);
 const eggJson = ref('');
@@ -24,14 +27,17 @@ async function loadBlueprints() {
 
 async function handleImportEgg() {
   importError.value = '';
+  isImporting.value = true;
   try {
     const parsed = JSON.parse(eggJson.value);
     await ApiService.post('/admin/blueprints/import-egg', parsed);
     showImportModal.value = false;
     eggJson.value = '';
-    loadBlueprints();
+    await loadBlueprints();
   } catch (err: any) {
     importError.value = err.message || 'Invalid JSON syntax or egg structure';
+  } finally {
+    isImporting.value = false;
   }
 }
 
@@ -59,9 +65,7 @@ onMounted(() => {
 
     <!-- Blueprints Table -->
     <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
-        {{ t('common.loading') }}
-      </div>
+      <SkeletonTable v-if="isLoading" :columns="5" :rows="5" />
 
       <table v-else class="w-full text-left text-xs">
         <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
@@ -129,9 +133,14 @@ onMounted(() => {
           <button @click="showImportModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             {{ t('common.cancel') }}
           </button>
-          <button @click="handleImportEgg" class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md">
+          <ButtonSpinner
+            @click="handleImportEgg"
+            :loading="isImporting"
+            spinner-color="white"
+            class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md"
+          >
             {{ t('common.create') }}
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>

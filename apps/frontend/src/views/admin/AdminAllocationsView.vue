@@ -3,12 +3,15 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiService } from '../../services/api.js';
 import { Network, Plus, Trash2, X } from 'lucide-vue-next';
+import SkeletonTable from '../../components/ui/SkeletonTable.vue';
+import ButtonSpinner from '../../components/ui/ButtonSpinner.vue';
 
 const { t } = useI18n();
 
 const allocations = ref<any[]>([]);
 const nodes = ref<any[]>([]);
 const isLoading = ref(false);
+const isCreating = ref(false);
 
 const showRangeModal = ref(false);
 const rangeForm = ref({
@@ -37,12 +40,15 @@ async function loadData() {
 }
 
 async function createRange() {
+  isCreating.value = true;
   try {
     await ApiService.post('/admin/allocations/range', rangeForm.value);
     showRangeModal.value = false;
-    loadData();
+    await loadData();
   } catch (err) {
     console.error('Failed to create range:', err);
+  } finally {
+    isCreating.value = false;
   }
 }
 
@@ -80,9 +86,7 @@ onMounted(() => {
 
     <!-- Table -->
     <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
-      <div v-if="isLoading" class="p-8 text-center text-xs font-mono text-slate-400">
-        {{ t('common.loading') }}
-      </div>
+      <SkeletonTable v-if="isLoading" :columns="5" :rows="5" />
 
       <table v-else class="w-full text-left text-xs font-mono">
         <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
@@ -161,9 +165,14 @@ onMounted(() => {
           <button @click="showRangeModal = false" class="px-3.5 py-2 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg transition-colors">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createRange" class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md">
+          <ButtonSpinner
+            @click="createRange"
+            :loading="isCreating"
+            spinner-color="white"
+            class="px-4 py-2 text-xs bg-primary hover:bg-primary-dark text-slate-950 font-semibold rounded-lg transition-colors shadow-md"
+          >
             {{ t('common.create') }}
-          </button>
+          </ButtonSpinner>
         </div>
       </div>
     </div>

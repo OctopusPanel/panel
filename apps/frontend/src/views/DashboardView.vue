@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useServerStore } from '../stores/server.js';
 import { PowerAction, ServerStatus } from '@octopus/shared';
 import ModuleSlot from '../components/modules/ModuleSlot.vue';
+import SkeletonCard from '../components/ui/SkeletonCard.vue';
 import {
   Server as ServerIcon,
   Power,
@@ -171,8 +172,8 @@ function getStatusBadge(status: string) {
     </div>
 
     <!-- Servers Roster Grid -->
-    <div v-if="serverStore.isLoading" class="p-16 text-center text-xs font-mono text-slate-400">
-      Loading server fleet...
+    <div v-if="serverStore.isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <SkeletonCard v-for="i in 6" :key="`skeleton-${i}`" />
     </div>
 
     <div
