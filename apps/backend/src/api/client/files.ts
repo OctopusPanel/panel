@@ -33,11 +33,20 @@ async function getServerAndVerify(c: Context<AppEnv>) {
   return server;
 }
 
+function normalizeContainerPath(p?: string): string {
+  if (!p) return '/';
+  let clean = p.trim().replace(/^(\/home\/container|\/?home\/container)/, '');
+  if (!clean.startsWith('/')) {
+    clean = '/' + clean;
+  }
+  return clean === '' ? '/' : clean;
+}
+
 // GET /api/v1/client/servers/:id/files
 clientFilesRouter.get('/:id/files', async (c) => {
   try {
     const server = await getServerAndVerify(c);
-    const directory = c.req.query('directory') || '/';
+    const directory = normalizeContainerPath(c.req.query('directory'));
     const client = await getTentacleClientForNode(server.nodeId);
     const files = await client.listFiles(server.uuid, directory);
 
@@ -54,10 +63,11 @@ clientFilesRouter.get('/:id/files', async (c) => {
 clientFilesRouter.get('/:id/files/contents', async (c) => {
   try {
     const server = await getServerAndVerify(c);
-    const file = c.req.query('file');
-    if (!file) {
+    const rawFile = c.req.query('file');
+    if (!rawFile) {
       return jsonError(c, ApiErrorCode.VALIDATION_ERROR, 422, {}, 'Query param "file" required');
     }
+    const file = normalizeContainerPath(rawFile);
 
     const client = await getTentacleClientForNode(server.nodeId);
     const content = await client.readFile(server.uuid, file);
@@ -76,11 +86,12 @@ clientFilesRouter.post('/:id/files/contents', async (c) => {
   try {
     const server = await getServerAndVerify(c);
     const body = await c.req.json().catch(() => ({}));
-    const { file, content } = body;
+    const { file: rawFile, content } = body;
 
-    if (!file || content === undefined) {
+    if (!rawFile || content === undefined) {
       return jsonError(c, ApiErrorCode.VALIDATION_ERROR, 422, {}, '"file" and "content" are required');
     }
+    const file = normalizeContainerPath(rawFile);
 
     const client = await getTentacleClientForNode(server.nodeId);
     await client.writeFile(server.uuid, file, content);
@@ -99,11 +110,12 @@ clientFilesRouter.post('/:id/files/directory', async (c) => {
   try {
     const server = await getServerAndVerify(c);
     const body = await c.req.json().catch(() => ({}));
-    const { path } = body;
+    const { path: rawPath } = body;
 
-    if (!path) {
+    if (!rawPath) {
       return jsonError(c, ApiErrorCode.VALIDATION_ERROR, 422, {}, '"path" is required');
     }
+    const path = normalizeContainerPath(rawPath);
 
     const client = await getTentacleClientForNode(server.nodeId);
     await client.createDirectory(server.uuid, path);
@@ -128,8 +140,14 @@ clientFilesRouter.post('/:id/files/rename', async (c) => {
       return jsonError(c, ApiErrorCode.VALIDATION_ERROR, 422, {}, '"files" array is required');
     }
 
+    const normalizedRoot = normalizeContainerPath(root);
+    const normalizedFiles = files.map((f: any) => ({
+      from: normalizeContainerPath(f.from),
+      to: normalizeContainerPath(f.to),
+    }));
+
     const client = await getTentacleClientForNode(server.nodeId);
-    await client.renameFile(server.uuid, root, files);
+    await client.renameFile(server.uuid, normalizedRoot, normalizedFiles);
 
     return c.json({
       success: true,
@@ -151,8 +169,9 @@ clientFilesRouter.delete('/:id/files', async (c) => {
       return jsonError(c, ApiErrorCode.VALIDATION_ERROR, 422, {}, '"paths" array is required');
     }
 
+    const normalizedPaths = paths.map((p: string) => normalizeContainerPath(p));
     const client = await getTentacleClientForNode(server.nodeId);
-    await client.deleteFile(server.uuid, paths);
+    await client.deleteFile(server.uuid, normalizedPaths);
 
     return c.json({
       success: true,

@@ -149,6 +149,13 @@ export class TentacleProviderDriver implements ServerProviderDriver {
       startupCommand = startupCommand.replace(/\{\{server\.build\.default\.port\}\}/g, String(ports[0].hostPort));
     }
 
+    finalEnv['STARTUP'] = finalEnv['STARTUP'] || startupCommand;
+
+    const isMinecraft = bp?.features?.includes('eula') || bp?.name?.toLowerCase()?.includes('paper') || bp?.name?.toLowerCase()?.includes('minecraft') || dockerImage?.includes('java');
+    if (isMinecraft) {
+      finalEnv['EULA'] = 'true';
+    }
+
     await client.createServer({
       uuid: server.uuid,
       name: server.name,
@@ -175,6 +182,16 @@ export class TentacleProviderDriver implements ServerProviderDriver {
 
   async start(server: Server): Promise<void> {
     const client = await this.clientFactory(server.nodeId);
+    const bp = (server as any).blueprint;
+    const isMinecraft = bp?.features?.includes('eula') || bp?.name?.toLowerCase()?.includes('paper') || bp?.name?.toLowerCase()?.includes('minecraft') || server.dockerImage?.includes('java');
+    if (isMinecraft) {
+      try {
+        await client.writeFile(server.uuid, 'eula.txt', 'eula=true\n');
+      } catch {
+        // Ignored
+      }
+    }
+
     try {
       await client.powerAction(server.uuid, PowerAction.START);
     } catch (err: any) {
