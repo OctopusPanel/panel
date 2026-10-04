@@ -32,6 +32,13 @@ export async function seed() {
       .returning();
     adminUser = inserted;
     console.log(`✅ Admin user created: ${adminEmail} (password: ${adminPassword})`);
+  } else if (process.env.ADMIN_PASSWORD) {
+    const passwordHash = await bcrypt.hash(adminPassword, 12);
+    await db
+      .update(users)
+      .set({ passwordHash, role: UserRole.ADMIN, updatedAt: new Date() })
+      .where(eq(users.id, existingAdmin.id));
+    console.log(`✅ Admin user password synchronized: ${adminEmail}`);
   } else {
     console.log(`ℹ️ Admin user already exists: ${adminEmail}`);
   }
