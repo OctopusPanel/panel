@@ -16,6 +16,10 @@ export interface SystemUpdateInfo {
   releaseNotes: string;
   publishedAt: string;
   downloadUrl: string;
+  daemon?: {
+    latestVersion: string;
+    downloadUrl: string;
+  };
 }
 
 export type UpdateStreamEvent =
@@ -45,6 +49,28 @@ export class UpdateRunner extends EventEmitter {
 
   async checkForUpdates(): Promise<SystemUpdateInfo> {
     const currentVersion = this.getCurrentVersion();
+    let daemonInfo = {
+      latestVersion: 'v0.1.8',
+      downloadUrl: 'https://github.com/OctopusPanel/tentacle/releases/latest',
+    };
+
+    try {
+      const tentacleRes = await fetch('https://api.github.com/repos/OctopusPanel/tentacle/releases/latest', {
+        headers: { 'User-Agent': 'OctopusPanel-UpdateService' },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (tentacleRes.ok) {
+        const tData = (await tentacleRes.json()) as any;
+        if (tData.tag_name) {
+          daemonInfo = {
+            latestVersion: tData.tag_name,
+            downloadUrl: tData.html_url || `https://github.com/OctopusPanel/tentacle/releases/tag/${tData.tag_name}`,
+          };
+        }
+      }
+    } catch {
+      // Ignore tentacle fetch error
+    }
 
     try {
       const controller = new AbortController();
@@ -75,6 +101,7 @@ export class UpdateRunner extends EventEmitter {
           releaseNotes: data.body || 'No changelog description provided.',
           publishedAt: data.published_at || new Date().toISOString(),
           downloadUrl: data.html_url || `https://github.com/OctopusPanel/panel/releases/tag/v${tag}`,
+          daemon: daemonInfo,
         };
       }
 
@@ -100,6 +127,7 @@ export class UpdateRunner extends EventEmitter {
             : 'Your OctopusPanel control plane is up to date with the latest code.',
           publishedAt: new Date().toISOString(),
           downloadUrl: 'https://github.com/OctopusPanel/panel',
+          daemon: daemonInfo,
         };
       }
     } catch {
@@ -114,6 +142,7 @@ export class UpdateRunner extends EventEmitter {
       releaseNotes: 'Your system is running the latest version.',
       publishedAt: new Date().toISOString(),
       downloadUrl: 'https://github.com/OctopusPanel/panel',
+      daemon: daemonInfo,
     };
   }
 
@@ -155,6 +184,29 @@ export class UpdateRunner extends EventEmitter {
     });
   }
 
+  private runCommandStreaming(command: string, cwd = process.cwd()): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const child = exec(command, { cwd });
+      child.stdout?.on('data', (data) => {
+        const lines = data.toString().split('\n');
+        for (const line of lines) {
+          if (line.trim()) this.logLine(`> ${line.trim()}`, 'stdout');
+        }
+      });
+      child.stderr?.on('data', (data) => {
+        const lines = data.toString().split('\n');
+        for (const line of lines) {
+          if (line.trim()) this.logLine(`> ${line.trim()}`, 'stderr');
+        }
+      });
+      child.on('close', (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`Command '${command}' exited with code ${code}`));
+      });
+      child.on('error', reject);
+    });
+  }
+
   private emitStep(step: number, title: string, progress: number): void {
     this.currentStep = step;
     this.broadcast({
@@ -192,20 +244,29 @@ export class UpdateRunner extends EventEmitter {
       this.emitStep(1, 'Safety Pre-Check & Automated DB Snapshot', 25);
       this.logLine('> Backing up configuration environment...');
       if (fs.existsSync('.env')) {
-        fs.copyFileSync('.env', '.env.bak');
-        this.logLine('> Saved configuration backup to .env.bak');
+        try {
+          fs.copyFileSync('.env', '.env.bak');
+          this.logLine('> Saved configuration backup to .env.bak');
+        } catch (e: any) {
+          this.logLine(`> Note: .env backup skipped: ${e?.message}`);
+        }
       }
 
       this.logLine('> Generating compressed PostgreSQL pre-migration snapshot...');
-      this.activeSnapshot = await snapshotManager.createSnapshot('pre-migration', currentVer);
-      this.logLine(`> Snapshot successfully created: ${this.activeSnapshot.filename} (${this.activeSnapshot.sizeFormatted})`);
+      try {
+        this.activeSnapshot = await snapshotManager.createSnapshot('pre-migration', currentVer);
+        this.logLine(`> Snapshot successfully created: ${this.activeSnapshot.filename} (${this.activeSnapshot.sizeFormatted})`);
+      } catch (snapErr: any) {
+        this.logLine(`> ⚠️ Snapshot generation warning: ${snapErr?.message || snapErr}`, 'error');
+        this.logLine('> Proceeding with codebase update...');
+      }
 
       // Step 2: Git Pull & Checkout
       this.emitStep(2, 'Pulling Latest Codebase & Release Assets', 50);
       try {
         this.logLine('> Executing git pull --rebase origin main...');
-        const { stdout: pullOut } = await execAsync('git pull --rebase origin main');
-        this.logLine(`> ${pullOut.trim()}`);
+        await this.runCommandStreaming('git pull --rebase origin main');
+        this.logLine('> Repository successfully updated.');
       } catch (gitErr: any) {
         this.logLine(`> Git pull info: ${gitErr?.message || gitErr}`);
       }
@@ -214,10 +275,10 @@ export class UpdateRunner extends EventEmitter {
       this.emitStep(3, 'Building Dependencies & Compiling Production Bundles', 75);
       try {
         this.logLine('> Installing dependencies with pnpm...');
-        await execAsync('pnpm install --prod=false');
+        await this.runCommandStreaming('pnpm install --prod=false');
         this.logLine('> Dependencies installed.');
         this.logLine('> Compiling monorepo assets (pnpm run build)...');
-        await execAsync('pnpm run build');
+        await this.runCommandStreaming('pnpm run build');
         this.logLine('> Assets successfully compiled.');
       } catch (buildErr: any) {
         this.logLine(`> Build info: ${buildErr?.message || buildErr}`);

@@ -146,9 +146,17 @@ export class SnapshotManager {
 
     const hasPgDump = await this.checkBinary('pg_dump');
 
+    let dumped = false;
     if (hasPgDump && config.databaseUrl) {
-      await this.dumpWithPgDump(filepath);
-    } else {
+      try {
+        await this.dumpWithPgDump(filepath);
+        dumped = true;
+      } catch (err) {
+        console.warn('[SnapshotManager] pg_dump failed, falling back to database client:', err);
+      }
+    }
+
+    if (!dumped) {
       await this.dumpWithDatabaseClient(filepath);
     }
 
@@ -173,9 +181,17 @@ export class SnapshotManager {
     }
 
     const hasPsql = await this.checkBinary('psql');
+    let restored = false;
     if (hasPsql && config.databaseUrl) {
-      await this.restoreWithPsql(snapshot.filepath);
-    } else {
+      try {
+        await this.restoreWithPsql(snapshot.filepath);
+        restored = true;
+      } catch (err) {
+        console.warn('[SnapshotManager] psql restore failed, falling back to database client:', err);
+      }
+    }
+
+    if (!restored) {
       await this.restoreWithDatabaseClient(snapshot.filepath);
     }
 
@@ -208,7 +224,26 @@ export class SnapshotManager {
 
   private async dumpWithPgDump(destPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const pgDump = spawn('pg_dump', [config.databaseUrl]);
+      const env = { ...process.env };
+      try {
+        const parsed = new URL(config.databaseUrl);
+        if (parsed.password) {
+          env.PGPASSWORD = decodeURIComponent(parsed.password);
+        }
+      } catch {}
+
+      const pgDump = spawn('pg_dump', [config.databaseUrl], {
+        env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+
+      const timeout = setTimeout(() => {
+        try {
+          pgDump.kill('SIGKILL');
+        } catch {}
+        reject(new Error('pg_dump timed out after 30 seconds'));
+      }, 30000);
+
       const gzip = zlib.createGzip();
       const output = fs.createWriteStream(destPath);
 
@@ -220,6 +255,7 @@ export class SnapshotManager {
       });
 
       pgDump.on('close', (code) => {
+        clearTimeout(timeout);
         if (code === 0) {
           resolve();
         } else {
@@ -227,7 +263,10 @@ export class SnapshotManager {
         }
       });
 
-      pgDump.on('error', reject);
+      pgDump.on('error', (err) => {
+        clearTimeout(timeout);
+        reject(err);
+      });
     });
   }
 

@@ -963,13 +963,20 @@ export class ApiService {
       };
     }
 
-    const eventSource = new EventSource('/api/v1/admin/system/update-stream');
+    const token = this.getToken();
+    const streamUrl = token
+      ? `/api/v1/admin/system/update-stream?token=${encodeURIComponent(token)}`
+      : '/api/v1/admin/system/update-stream';
+    const eventSource = new EventSource(streamUrl);
     eventSource.addEventListener('update_event', (e) => {
       try {
         const parsed = JSON.parse(e.data);
         onEvent(parsed);
       } catch {}
     });
+    eventSource.onerror = (err) => {
+      console.warn('[EventSource] Update stream error/closed:', err);
+    };
 
     return () => {
       eventSource.close();

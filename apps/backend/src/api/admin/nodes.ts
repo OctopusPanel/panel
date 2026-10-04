@@ -21,21 +21,46 @@ adminNodesRouter.get('/', async (c) => {
     },
   });
 
-  const enriched = allNodes.map((n) => ({
-    id: n.id,
-    uuid: n.uuid,
-    name: n.name,
-    fqdn: n.fqdn,
-    apiPort: n.apiPort,
-    sftpPort: n.sftpPort,
-    memoryLimit: n.memoryLimit,
-    diskLimit: n.diskLimit,
-    isMaintenance: n.isMaintenance,
-    createdAt: n.createdAt,
-    updatedAt: n.updatedAt,
-    allocationsCount: n.allocations.length,
-    serversCount: n.servers.length,
-  }));
+  const enriched = await Promise.all(
+    allNodes.map(async (n) => {
+      let isOnline = false;
+      let daemonVersion = 'v0.1.7';
+
+      try {
+        const client = await getTentacleClientForNode(n.id);
+        const health = await Promise.race([
+          client.getHealth(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
+        ]);
+        if (health && health.status === 'healthy') {
+          isOnline = true;
+          if (health.version) {
+            daemonVersion = health.version.startsWith('v') ? health.version : `v${health.version}`;
+          }
+        }
+      } catch {
+        isOnline = false;
+      }
+
+      return {
+        id: n.id,
+        uuid: n.uuid,
+        name: n.name,
+        fqdn: n.fqdn,
+        apiPort: n.apiPort,
+        sftpPort: n.sftpPort,
+        memoryLimit: n.memoryLimit,
+        diskLimit: n.diskLimit,
+        isMaintenance: n.isMaintenance,
+        createdAt: n.createdAt,
+        updatedAt: n.updatedAt,
+        allocationsCount: n.allocations.length,
+        serversCount: n.servers.length,
+        isOnline,
+        daemonVersion,
+      };
+    })
+  );
 
   return c.json({
     success: true,
@@ -298,11 +323,52 @@ adminNodesRouter.post('/:id/update', async (c) => {
   }
 
   const body = await c.req.json().catch(() => ({}));
-  const targetVersion = (body.targetVersion as string) || 'v0.2.0';
-  const sha256 = (body.sha256 as string) || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  let targetVersion = (body.targetVersion as string)?.trim();
+
+  // If targetVersion is omitted or points to panel version (e.g. 0.2.x), resolve latest tentacle release
+  if (!targetVersion || targetVersion.startsWith('v0.2') || targetVersion.startsWith('0.2')) {
+    try {
+      const ghRes = await fetch('https://api.github.com/repos/OctopusPanel/tentacle/releases/latest', {
+        headers: { 'User-Agent': 'OctopusPanel-UpdateService' },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (ghRes.ok) {
+        const ghData = (await ghRes.json()) as any;
+        if (ghData.tag_name) {
+          targetVersion = ghData.tag_name;
+        }
+      }
+    } catch {}
+  }
+
+  if (!targetVersion || targetVersion.startsWith('v0.2') || targetVersion.startsWith('0.2')) {
+    targetVersion = 'v0.1.8';
+  }
+  if (!targetVersion.startsWith('v')) {
+    targetVersion = `v${targetVersion}`;
+  }
+
+  const defaultAsset = 'tentacle-x86_64-unknown-linux-gnu.tar.gz';
   const downloadUrl =
     (body.downloadUrl as string) ||
-    `https://github.com/OctopusPanel/tentacle/releases/download/${targetVersion}/tentacle-linux-x86_64.tar.gz`;
+    `https://github.com/OctopusPanel/tentacle/releases/download/${targetVersion}/${defaultAsset}`;
+
+  let sha256 = (body.sha256 as string)?.trim();
+  if (!sha256) {
+    try {
+      const shaRes = await fetch(`${downloadUrl}.sha256`, {
+        signal: AbortSignal.timeout(4000),
+      });
+      if (shaRes.ok) {
+        const text = await shaRes.text();
+        sha256 = text.trim().split(/\s+/)[0];
+      }
+    } catch {}
+  }
+
+  if (!sha256) {
+    sha256 = 'skip';
+  }
 
   try {
     const client = await getTentacleClientForNode(id);
