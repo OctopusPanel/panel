@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Cpu, HardDrive, Database, Activity, Clock, Terminal, Copy, Check, Eye, EyeOff, X, ExternalLink } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -10,56 +10,87 @@ const showSftpModal = ref(false);
 const showPassword = ref(false);
 const copiedField = ref<string | null>(null);
 
-// Local animated metrics
-const cpuUsage = ref(props.server?.metrics?.cpuCurrent ?? 18.4);
-const ramBytes = ref(props.server?.metrics?.memoryCurrentBytes ?? 1971322880);
-const diskBytes = ref(props.server?.metrics?.diskCurrentBytes ?? 15247133696);
-const rxBytes = ref(props.server?.metrics?.networkRxBytes ?? 14889779);
-const txBytes = ref(props.server?.metrics?.networkTxBytes ?? 50960793);
-const uptimeSecs = ref(props.server?.metrics?.uptimeSeconds ?? 411120);
+// Real reactive metrics from daemon
+const cpuUsage = ref(0);
+const ramBytes = ref(0);
+const diskBytes = ref(0);
+const rxBytes = ref(0);
+const txBytes = ref(0);
+const uptimeSecs = ref(0);
 
 // Trend history for CPU mini sparkline
-const cpuHistory = ref<number[]>([14, 16, 18, 15, 22, 19, 18.4]);
+const cpuHistory = ref<number[]>([0]);
 
 let interval: any = null;
 
-onMounted(() => {
-  if (props.server?.status === 'running') {
-    interval = setInterval(() => {
-      // Jiggle CPU slightly
-      const delta = (Math.random() - 0.48) * 1.5;
-      const nextCpu = Math.max(2, Math.min(props.server?.cpu || 200, +(cpuUsage.value + delta).toFixed(1)));
-      cpuUsage.value = nextCpu;
-      cpuHistory.value.push(nextCpu);
-      if (cpuHistory.value.length > 8) cpuHistory.value.shift();
+function applyServerMetrics() {
+  const s = props.server;
+  const isRunning = s?.status === 'running';
+  const m = s?.metrics;
 
-      // Jiggle RAM slightly
-      ramBytes.value += Math.floor((Math.random() - 0.5) * 4000000);
-
-      // Increment network
-      rxBytes.value += Math.floor(Math.random() * 25000);
-      txBytes.value += Math.floor(Math.random() * 70000);
-
-      // Increment uptime
-      uptimeSecs.value += 3;
-    }, 3000);
+  if (!isRunning || !m) {
+    cpuUsage.value = 0;
+    ramBytes.value = 0;
+    diskBytes.value = m?.diskCurrentBytes ?? m?.resources?.diskBytes ?? 0;
+    rxBytes.value = 0;
+    txBytes.value = 0;
+    uptimeSecs.value = 0;
+    return;
   }
+
+  const cpu = +(m?.cpuCurrent ?? m?.resources?.cpuAbsolute ?? 0).toFixed(1);
+  cpuUsage.value = cpu;
+  if (cpuHistory.value.length === 1 && cpuHistory.value[0] === 0) {
+    cpuHistory.value = [cpu];
+  } else {
+    cpuHistory.value.push(cpu);
+    if (cpuHistory.value.length > 8) cpuHistory.value.shift();
+  }
+
+  ramBytes.value = m?.memoryCurrentBytes ?? m?.resources?.memoryBytes ?? 0;
+  diskBytes.value = m?.diskCurrentBytes ?? m?.resources?.diskBytes ?? 0;
+  rxBytes.value = m?.networkRxBytes ?? m?.resources?.networkRxBytes ?? 0;
+  txBytes.value = m?.networkTxBytes ?? m?.resources?.networkTxBytes ?? 0;
+  const uptimeMs = m?.uptimeSeconds ? m.uptimeSeconds * 1000 : (m?.resources?.uptimeMs ?? 0);
+  uptimeSecs.value = Math.floor(uptimeMs / 1000);
+}
+
+watch(
+  () => [props.server?.status, props.server?.metrics],
+  () => applyServerMetrics(),
+  { deep: true, immediate: true }
+);
+
+onMounted(() => {
+  applyServerMetrics();
+  interval = setInterval(() => {
+    if (props.server?.status === 'running' && uptimeSecs.value > 0) {
+      uptimeSecs.value += 1;
+    }
+  }, 1000);
 });
 
 onBeforeUnmount(() => {
   if (interval) clearInterval(interval);
 });
 
-const cpuLimit = computed(() => props.server?.cpu || 200);
+const cpuLimit = computed(() => props.server?.cpu || 100);
 const cpuPercent = computed(() => {
+  if (cpuLimit.value <= 0) return 0;
   return Math.min(100, Math.round((cpuUsage.value / cpuLimit.value) * 100));
 });
 
-const maxRamBytes = computed(() => (props.server?.memory || 4096) * 1024 * 1024);
-const ramPercent = computed(() => Math.min(100, Math.round((ramBytes.value / maxRamBytes.value) * 100)));
+const maxRamBytes = computed(() => (props.server?.memory || 1024) * 1024 * 1024);
+const ramPercent = computed(() => {
+  if (maxRamBytes.value <= 0) return 0;
+  return Math.min(100, Math.round((ramBytes.value / maxRamBytes.value) * 100));
+});
 
-const maxDiskBytes = computed(() => (props.server?.disk || 35840) * 1024 * 1024);
-const diskPercent = computed(() => Math.min(100, Math.round((diskBytes.value / maxDiskBytes.value) * 100)));
+const maxDiskBytes = computed(() => (props.server?.disk || 10240) * 1024 * 1024);
+const diskPercent = computed(() => {
+  if (maxDiskBytes.value <= 0) return 0;
+  return Math.min(100, Math.round((diskBytes.value / maxDiskBytes.value) * 100));
+});
 
 function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return '0 B';
@@ -87,10 +118,14 @@ function copyText(val: string, fieldKey: string) {
   }, 2000);
 }
 
-const sftpHost = computed(() => props.server?.node?.fqdn || 'node.octopus.network');
+const sftpHost = computed(() => {
+  const fqdn = props.server?.node?.fqdn;
+  if (fqdn) return fqdn.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  return typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+});
 const sftpPort = computed(() => props.server?.node?.sftpPort || 2022);
-const sftpUser = computed(() => props.server?.sftp?.username || `Admin.${props.server?.identifier || 'srv'}`);
-const sftpPass = computed(() => props.server?.sftp?.passwordPreview || 'oct_sftp_secret_pass');
+const sftpUser = computed(() => props.server?.sftp?.username || `admin.${props.server?.identifier || 'srv'}`);
+const sftpPass = computed(() => props.server?.sftp?.passwordPreview || 'Your panel password');
 const sftpUri = computed(() => `sftp://${sftpUser.value}:${sftpPass.value}@${sftpHost.value}:${sftpPort.value}`);
 </script>
 

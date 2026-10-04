@@ -98,9 +98,14 @@ async function connectSocket() {
     socket.onmessage = (event) => {
       try {
         const parsed = JSON.parse(event.data);
-        if (parsed.event === 'console_output' && parsed.args?.[0]) {
-          term?.write(parsed.args[0] + '\r\n');
-        } else {
+        if (parsed.event === 'console_output' && parsed.args?.[0] !== undefined) {
+          const out = String(parsed.args[0]);
+          term?.write(out.endsWith('\n') ? out : out + '\r\n');
+        } else if (parsed.event === 'panel_notice' && parsed.data) {
+          term?.writeln(`\r\n\x1b[33m[OctopusPanel] ${parsed.data}\x1b[0m\r\n`);
+        } else if (parsed.event === 'stats' || parsed.event === 'token_expiring' || parsed.event === 'token_expired') {
+          // Internal daemon metrics and heartbeat, do not print raw JSON
+        } else if (!parsed.event) {
           term?.write(event.data + '\r\n');
         }
       } catch {

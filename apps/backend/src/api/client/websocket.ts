@@ -31,11 +31,10 @@ clientWsRouter.get('/:id/ws-token', async (c) => {
   }
 
   const token = generateWsToken(user.id, server.uuid);
-  const node = server.node;
-  const cleanFqdn = node.fqdn.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-  const isHttps = node.fqdn.startsWith('https://') || c.req.header('x-forwarded-proto') === 'https';
-  const scheme = node.fqdn.startsWith('https://') ? 'wss' : (node.fqdn.startsWith('http://') ? 'ws' : (isHttps ? 'wss' : 'ws'));
-  const wsUrl = `${scheme}://${cleanFqdn}:${node.apiPort}/api/servers/${server.uuid}/ws`;
+  const host = c.req.header('x-forwarded-host') || c.req.header('host') || 'localhost:3000';
+  const proto = c.req.header('x-forwarded-proto') || (c.req.url.startsWith('https:') ? 'https' : 'http');
+  const wsScheme = proto === 'https' ? 'wss' : 'ws';
+  const wsUrl = `${wsScheme}://${host}/api/v1/client/servers/${server.uuid}/ws`;
 
   return c.json({
     success: true,
