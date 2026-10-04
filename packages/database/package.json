@@ -23,7 +23,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/migrate.ts",
     "db:seed": "tsx src/seed.ts",
-    "reset-admin": "tsx src/reset-admin.ts"
+    "reset-admin": "tsx src/reset-admin.ts",
+    "purge-fixtures": "tsx src/purge-fixtures.ts"
   },
   "dependencies": {
     "@octopus/shared": "workspace:*",

@@ -13,7 +13,8 @@
     "db:generate": "pnpm --filter @octopus/database db:generate",
     "db:migrate": "pnpm --filter @octopus/database db:migrate",
     "db:seed": "pnpm --filter @octopus/database db:seed",
-    "reset-admin": "pnpm --filter @octopus/database reset-admin"
+    "reset-admin": "pnpm --filter @octopus/database reset-admin",
+    "purge-fixtures": "pnpm --filter @octopus/database purge-fixtures"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
