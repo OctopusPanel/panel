@@ -89,15 +89,18 @@ async function loadFiles(dir = currentDirectory.value) {
       `/client/servers/${props.serverUuid}/files?directory=${encodeURIComponent(dir)}`,
     );
     // Ensure file/dir flags
-    files.value = (data || []).map((f) => ({
-      name: f.name,
-      path: `${dir}/${f.name}`.replace(/\/+/g, '/'),
-      size: f.size || 0,
-      isDirectory: f.isDirectory ?? !f.isFile,
-      isFile: f.isFile ?? !f.isDirectory,
-      modified: (f as any).modified || '2026-10-03 18:25',
-      mode: (f as any).mode || (f.isDirectory ? 'drwxr-xr-x' : '-rw-r--r--'),
-    }));
+    files.value = (data || []).map((f: any) => {
+      const isDir = Boolean(f.is_dir ?? f.isDirectory ?? !f.isFile);
+      return {
+        name: f.name,
+        path: `${dir}/${f.name}`.replace(/\/+/g, '/'),
+        size: f.size || 0,
+        isDirectory: isDir,
+        isFile: !isDir,
+        modified: f.modified ? (typeof f.modified === 'number' ? new Date(f.modified * 1000).toLocaleString() : String(f.modified)) : '2026-10-04',
+        mode: f.mode || (isDir ? 'drwxr-xr-x' : '-rw-r--r--'),
+      };
+    });
     currentDirectory.value = dir;
   } catch (err) {
     console.error('Failed to load files:', err);

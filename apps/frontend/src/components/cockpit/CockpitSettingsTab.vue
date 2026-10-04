@@ -12,6 +12,7 @@ const router = useRouter();
 
 const nameInput = ref(props.server?.name || '');
 const descInput = ref(props.server?.description || '');
+const dockerImageInput = ref(props.server?.dockerImage || '');
 const isSaving = ref(false);
 const saveSuccess = ref(false);
 
@@ -30,9 +31,11 @@ async function saveMetadata() {
     await ApiService.put(`/client/servers/${props.server?.uuid}`, {
       name: nameInput.value,
       description: descInput.value,
+      dockerImage: dockerImageInput.value,
     });
     props.server.name = nameInput.value;
     props.server.description = descInput.value;
+    props.server.dockerImage = dockerImageInput.value;
     saveSuccess.value = true;
     setTimeout(() => {
       saveSuccess.value = false;
@@ -113,6 +116,16 @@ async function triggerDelete() {
             placeholder="Add internal notes or customer notes..."
             class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2.5 text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 leading-relaxed resize-none"
           ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">OCI Docker Image</label>
+          <input
+            v-model="dockerImageInput"
+            type="text"
+            placeholder="e.g. ghcr.io/ptero-eggs/yolks:java_25"
+            class="w-full bg-[#0b0f17] border border-slate-700 rounded-lg p-2.5 text-slate-200 font-mono outline-none focus:ring-1 focus:ring-blue-500"
+          />
         </div>
       </div>
     </div>
