@@ -62,7 +62,7 @@ adminNodesRouter.post('/', async (c) => {
     })
     .returning();
 
-  const setupCommand = `curl -sSL ${config.panelUrl}/install-tentacle.sh | bash -s -- --panel-url ${config.panelUrl} --token ${rawToken} --port ${created.apiPort} --sftp-port ${created.sftpPort}`;
+  const setupCommand = `curl -sSL ${config.panelUrl}/install-tentacle.sh | bash -s -- --panel-url ${config.panelUrl} --token ${rawToken} --port ${created.apiPort} --sftp-port ${created.sftpPort} --install-docker`;
 
   return c.json(
     {
@@ -135,7 +135,7 @@ adminNodesRouter.get('/:id/setup-command', async (c) => {
 
   await db.update(nodes).set({ tokenHash }).where(eq(nodes.id, id));
 
-  const setupCommand = `curl -sSL ${config.panelUrl}/install-tentacle.sh | bash -s -- --panel-url ${config.panelUrl} --token ${rawToken} --port ${node.apiPort} --sftp-port ${node.sftpPort}`;
+  const setupCommand = `curl -sSL ${config.panelUrl}/install-tentacle.sh | bash -s -- --panel-url ${config.panelUrl} --token ${rawToken} --port ${node.apiPort} --sftp-port ${node.sftpPort} --install-docker`;
 
   return c.json({
     success: true,
