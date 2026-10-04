@@ -21,38 +21,66 @@ const uptimeSecs = ref(0);
 // Trend history for CPU mini sparkline
 const cpuHistory = ref<number[]>([0]);
 
+// Uptime anchor: daemon-reported uptime at the moment the sample arrived
+let uptimeAnchorSecs = 0;
+let uptimeAnchorAt = 0;
+let lastSampleAt = 0;
+
 let interval: any = null;
 
-function applyServerMetrics() {
-  const s = props.server;
-  const isAlive = s?.status === 'running' || s?.status === 'starting';
-  const m = s?.metrics;
+const isAlive = computed(() => props.server?.status === 'running' || props.server?.status === 'starting');
 
-  if (!isAlive || !m) {
+function tickUptime() {
+  if (!isAlive.value || uptimeAnchorAt === 0) {
+    uptimeSecs.value = isAlive.value ? uptimeSecs.value : 0;
+    return;
+  }
+  uptimeSecs.value = uptimeAnchorSecs + Math.floor((Date.now() - uptimeAnchorAt) / 1000);
+}
+
+function applyServerMetrics() {
+  const m = props.server?.metrics;
+
+  if (!isAlive.value || !m) {
     cpuUsage.value = 0;
     ramBytes.value = 0;
-    diskBytes.value = m?.diskCurrentBytes ?? m?.disk_bytes ?? m?.resources?.diskBytes ?? 0;
+    diskBytes.value = m?.diskCurrentBytes ?? m?.disk_bytes ?? m?.resources?.diskBytes ?? diskBytes.value;
     rxBytes.value = 0;
     txBytes.value = 0;
+    uptimeAnchorAt = 0;
     uptimeSecs.value = 0;
     return;
   }
 
   const cpu = +(m?.cpuCurrent ?? m?.cpu_usage_pct ?? m?.resources?.cpuAbsolute ?? 0).toFixed(1);
   cpuUsage.value = cpu;
-  if (cpuHistory.value.length === 1 && cpuHistory.value[0] === 0) {
-    cpuHistory.value = [cpu];
-  } else {
-    cpuHistory.value.push(cpu);
-    if (cpuHistory.value.length > 8) cpuHistory.value.shift();
+
+  const sampleAt = m?.receivedAt ?? Date.now();
+  if (sampleAt !== lastSampleAt) {
+    lastSampleAt = sampleAt;
+    if (cpuHistory.value.length === 1 && cpuHistory.value[0] === 0) {
+      cpuHistory.value = [cpu];
+    } else {
+      cpuHistory.value.push(cpu);
+      if (cpuHistory.value.length > 20) cpuHistory.value.shift();
+    }
   }
 
   ramBytes.value = m?.memoryCurrentBytes ?? m?.memory_bytes ?? m?.resources?.memoryBytes ?? 0;
-  diskBytes.value = m?.diskCurrentBytes ?? m?.disk_bytes ?? m?.resources?.diskBytes ?? 0;
+  diskBytes.value = m?.diskCurrentBytes ?? m?.disk_bytes ?? m?.resources?.diskBytes ?? diskBytes.value;
   rxBytes.value = m?.networkRxBytes ?? m?.network_rx_bytes ?? m?.resources?.networkRxBytes ?? 0;
   txBytes.value = m?.networkTxBytes ?? m?.network_tx_bytes ?? m?.resources?.networkTxBytes ?? 0;
-  const uptimeMs = m?.uptimeSeconds ? m.uptimeSeconds * 1000 : (m?.resources?.uptimeMs ?? 0);
-  uptimeSecs.value = Math.floor(uptimeMs / 1000);
+
+  const reportedSecs = m?.uptimeSeconds ?? (m?.resources?.uptimeMs ? Math.floor(m.resources.uptimeMs / 1000) : 0);
+  if (reportedSecs > 0) {
+    uptimeAnchorSecs = reportedSecs;
+    uptimeAnchorAt = sampleAt;
+  } else if (uptimeAnchorAt === 0) {
+    // Older daemons don't report uptime: count from the first live sample
+    uptimeAnchorSecs = 0;
+    uptimeAnchorAt = sampleAt;
+  }
+  tickUptime();
 }
 
 watch(
@@ -63,11 +91,7 @@ watch(
 
 onMounted(() => {
   applyServerMetrics();
-  interval = setInterval(() => {
-    if (props.server?.status === 'running' && uptimeSecs.value > 0) {
-      uptimeSecs.value += 1;
-    }
-  }, 1000);
+  interval = setInterval(tickUptime, 1000);
 });
 
 onBeforeUnmount(() => {
