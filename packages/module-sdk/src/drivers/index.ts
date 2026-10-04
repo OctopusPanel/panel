@@ -76,7 +76,7 @@ export class TentacleProviderDriver implements ServerProviderDriver {
           hostPort: mainAlloc.port,
           containerPort: mainAlloc.port,
           protocol: 'tcp',
-          hostIp: mainAlloc.ipAddress || '0.0.0.0',
+          hostIp: '0.0.0.0',
         });
       }
       const otherAllocs = (server as any).allocations;
@@ -87,7 +87,7 @@ export class TentacleProviderDriver implements ServerProviderDriver {
               hostPort: a.port,
               containerPort: a.port,
               protocol: 'tcp',
-              hostIp: a.ipAddress || '0.0.0.0',
+              hostIp: '0.0.0.0',
             });
           }
         }
