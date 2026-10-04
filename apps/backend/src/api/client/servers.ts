@@ -128,3 +128,107 @@ clientServersRouter.put('/:id', async (c) => {
     data: updated,
   });
 });
+
+// GET /api/v1/client/servers/:id/variables
+clientServersRouter.get('/:id/variables', async (c) => {
+  const user = c.get('user') as SessionUser;
+  const param = c.req.param('id');
+  const isNumeric = /^\d+$/.test(param);
+
+  const server = await db.query.servers.findFirst({
+    where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
+    with: {
+      blueprint: true,
+    },
+  });
+
+  if (!server) {
+    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param }, 'Server not found');
+  }
+
+  if (user.role !== UserRole.ADMIN && server.userId !== user.id) {
+    const subuser = await db.query.subusers.findFirst({
+      where: eq(subusers.serverId, server.id),
+    });
+    if (!subuser || subuser.userId !== user.id) {
+      return jsonError(c, ApiErrorCode.AUTH_FORBIDDEN, 403, {}, 'Access to server denied');
+    }
+  }
+
+  const bp = server.blueprint;
+  const bpVars = Array.isArray(bp?.variables) ? bp.variables : [];
+  const envMap = (server.environment || {}) as Record<string, string>;
+
+  const variables = bpVars.map((v: any) => ({
+    ...v,
+    currentValue: envMap[v.key] !== undefined ? envMap[v.key] : v.defaultValue,
+  }));
+
+  return c.json({
+    success: true,
+    data: {
+      variables,
+      startupCommand: server.startupCommand || bp?.startupCommand || '',
+      dockerImage: server.dockerImage || bp?.dockerImage || '',
+      dockerImages:
+        Array.isArray(bp?.dockerImages) && bp.dockerImages.length > 0
+          ? bp.dockerImages
+          : [server.dockerImage || bp?.dockerImage].filter(Boolean),
+    },
+  });
+});
+
+// PUT /api/v1/client/servers/:id/variables
+clientServersRouter.put('/:id/variables', async (c) => {
+  const user = c.get('user') as SessionUser;
+  const param = c.req.param('id');
+  const isNumeric = /^\d+$/.test(param);
+
+  const server = await db.query.servers.findFirst({
+    where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
+  });
+
+  if (!server) {
+    return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param }, 'Server not found');
+  }
+
+  if (user.role !== UserRole.ADMIN && server.userId !== user.id) {
+    return jsonError(c, ApiErrorCode.AUTH_FORBIDDEN, 403, {}, 'Access to server denied');
+  }
+
+  const body = await c.req.json().catch(() => ({}));
+  const envMap = { ...((server.environment || {}) as Record<string, string>) };
+
+  if (Array.isArray(body.variables)) {
+    for (const v of body.variables) {
+      if (v && v.key) {
+        envMap[v.key] =
+          v.currentValue !== undefined && v.currentValue !== null
+            ? String(v.currentValue)
+            : String(v.defaultValue || '');
+      }
+    }
+  }
+
+  const updateData: any = {
+    environment: envMap,
+    updatedAt: new Date(),
+  };
+
+  if (typeof body.startupCommand === 'string' && body.startupCommand.trim()) {
+    updateData.startupCommand = body.startupCommand.trim();
+  }
+  if (typeof body.dockerImage === 'string' && body.dockerImage.trim()) {
+    updateData.dockerImage = body.dockerImage.trim();
+  }
+
+  await db.update(servers).set(updateData).where(eq(servers.id, server.id));
+
+  return c.json({
+    success: true,
+    data: {
+      message: 'Variables updated successfully. A server restart is required to apply changes.',
+      restartRequired: true,
+    },
+  });
+});

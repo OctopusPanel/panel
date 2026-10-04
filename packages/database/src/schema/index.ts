@@ -6,3 +6,6 @@ export * from './servers.js';
 export * from './subusers.js';
 export * from './audit_logs.js';
 export * from './modules.js';
+export * from './server_backups.js';
+export * from './server_databases.js';
+export * from './server_schedules.js';

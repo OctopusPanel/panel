@@ -25,20 +25,20 @@ let interval: any = null;
 
 function applyServerMetrics() {
   const s = props.server;
-  const isRunning = s?.status === 'running';
+  const isAlive = s?.status === 'running' || s?.status === 'starting';
   const m = s?.metrics;
 
-  if (!isRunning || !m) {
+  if (!isAlive || !m) {
     cpuUsage.value = 0;
     ramBytes.value = 0;
-    diskBytes.value = m?.diskCurrentBytes ?? m?.resources?.diskBytes ?? 0;
+    diskBytes.value = m?.diskCurrentBytes ?? m?.disk_bytes ?? m?.resources?.diskBytes ?? 0;
     rxBytes.value = 0;
     txBytes.value = 0;
     uptimeSecs.value = 0;
     return;
   }
 
-  const cpu = +(m?.cpuCurrent ?? m?.resources?.cpuAbsolute ?? 0).toFixed(1);
+  const cpu = +(m?.cpuCurrent ?? m?.cpu_usage_pct ?? m?.resources?.cpuAbsolute ?? 0).toFixed(1);
   cpuUsage.value = cpu;
   if (cpuHistory.value.length === 1 && cpuHistory.value[0] === 0) {
     cpuHistory.value = [cpu];
@@ -47,10 +47,10 @@ function applyServerMetrics() {
     if (cpuHistory.value.length > 8) cpuHistory.value.shift();
   }
 
-  ramBytes.value = m?.memoryCurrentBytes ?? m?.resources?.memoryBytes ?? 0;
-  diskBytes.value = m?.diskCurrentBytes ?? m?.resources?.diskBytes ?? 0;
-  rxBytes.value = m?.networkRxBytes ?? m?.resources?.networkRxBytes ?? 0;
-  txBytes.value = m?.networkTxBytes ?? m?.resources?.networkTxBytes ?? 0;
+  ramBytes.value = m?.memoryCurrentBytes ?? m?.memory_bytes ?? m?.resources?.memoryBytes ?? 0;
+  diskBytes.value = m?.diskCurrentBytes ?? m?.disk_bytes ?? m?.resources?.diskBytes ?? 0;
+  rxBytes.value = m?.networkRxBytes ?? m?.network_rx_bytes ?? m?.resources?.networkRxBytes ?? 0;
+  txBytes.value = m?.networkTxBytes ?? m?.network_tx_bytes ?? m?.resources?.networkTxBytes ?? 0;
   const uptimeMs = m?.uptimeSeconds ? m.uptimeSeconds * 1000 : (m?.resources?.uptimeMs ?? 0);
   uptimeSecs.value = Math.floor(uptimeMs / 1000);
 }
