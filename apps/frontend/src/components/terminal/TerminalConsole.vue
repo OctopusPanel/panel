@@ -98,14 +98,17 @@ async function connectSocket() {
     socket.onmessage = (event) => {
       try {
         const parsed = JSON.parse(event.data);
-        if (parsed.event === 'console_output' && parsed.args?.[0] !== undefined) {
-          const out = String(parsed.args[0]);
+        const eventName = parsed.event || parsed.type;
+        const eventData = parsed.data !== undefined ? parsed.data : (Array.isArray(parsed.args) ? parsed.args[0] : parsed.args);
+
+        if ((eventName === 'console_output' || eventName === 'console') && eventData !== undefined) {
+          const out = String(eventData);
           term?.write(out.endsWith('\n') ? out : out + '\r\n');
-        } else if (parsed.event === 'panel_notice' && parsed.data) {
-          term?.writeln(`\r\n\x1b[33m[OctopusPanel] ${parsed.data}\x1b[0m\r\n`);
-        } else if (parsed.event === 'stats' || parsed.event === 'token_expiring' || parsed.event === 'token_expired') {
+        } else if (eventName === 'panel_notice' && (eventData || parsed.data)) {
+          term?.writeln(`\r\n\x1b[33m[OctopusPanel] ${eventData || parsed.data}\x1b[0m\r\n`);
+        } else if (eventName === 'stats' || eventName === 'token_expiring' || eventName === 'token_expired') {
           // Internal daemon metrics and heartbeat, do not print raw JSON
-        } else if (!parsed.event) {
+        } else if (!eventName) {
           term?.write(event.data + '\r\n');
         }
       } catch {
