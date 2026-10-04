@@ -43,6 +43,32 @@ app.get('/api/system/health', (c) => {
   });
 });
 
+// Serve Tentacle Node Installer Shell Script
+const serveTentacleInstaller = (c: any) => {
+  const candidatePaths = [
+    path.resolve(process.cwd(), 'scripts/install-tentacle.sh'),
+    path.resolve(__dirname, '../../../../scripts/install-tentacle.sh'),
+    path.resolve(__dirname, '../../../scripts/install-tentacle.sh'),
+    path.resolve(__dirname, '../../scripts/install-tentacle.sh'),
+  ];
+  const scriptPath = candidatePaths.find((p) => fs.existsSync(p));
+
+  if (scriptPath) {
+    const script = fs.readFileSync(scriptPath, 'utf-8');
+    c.header('Content-Type', 'text/x-shellscript; charset=utf-8');
+    c.header('X-Content-Type-Options', 'nosniff');
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return c.body(script);
+  }
+
+  return c.text('echo "Error: Tentacle installer script not found on panel server" >&2; exit 1\n', 404, {
+    'Content-Type': 'text/plain; charset=utf-8',
+  });
+};
+
+app.get('/install-tentacle.sh', serveTentacleInstaller);
+app.get('/tentacle/install.sh', serveTentacleInstaller);
+
 // Locate frontend dist directory across monorepo layouts
 const candidateFrontendDirs = [
   path.resolve(process.cwd(), 'apps/frontend/dist'),
