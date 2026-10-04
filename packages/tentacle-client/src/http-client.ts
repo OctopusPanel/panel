@@ -62,9 +62,12 @@ export class TentacleHttpClient {
     try {
       return await this.executeFetch<T>(this.baseUrl, path, options);
     } catch (err: any) {
-      // If primary base URL failed with network error and fallback is available, try fallback
-      if (this.fallbackBaseUrl && this.fallbackBaseUrl !== this.baseUrl && !err.message?.includes('Tentacle HTTP')) {
-        return await this.executeFetch<T>(this.fallbackBaseUrl, path, options);
+      if (this.fallbackBaseUrl && this.fallbackBaseUrl !== this.baseUrl) {
+        try {
+          return await this.executeFetch<T>(this.fallbackBaseUrl, path, options);
+        } catch {
+          // Both failed, proceed with original error
+        }
       }
       throw err;
     }
@@ -102,16 +105,21 @@ export class TentacleHttpClient {
       protocol: (p.protocol || 'tcp').toLowerCase(),
     }));
 
-    const payload: TentacleServerCreatePayload = {
+    const payload = {
       id: options.uuid,
+      uuid: options.uuid,
       name: options.name || `Server ${options.uuid.slice(0, 8)}`,
       docker_image: options.image,
+      image: options.image,
       startup_command: options.startupCommand,
+      startup: options.startupCommand,
       stop_command: options.stopCommand || undefined,
       stop_timeout_secs: options.stopTimeoutSecs || 30,
       environment: options.environment || {},
       allocations,
+      ports: allocations,
       memory_limit_bytes: memoryBytes,
+      memory_bytes: memoryBytes,
       swap_limit_bytes: swapBytes,
       cpu_quota: cpuQuota,
       cpu_period: cpuPeriod,
@@ -138,7 +146,11 @@ export class TentacleHttpClient {
   async powerAction(uuid: string, action: PowerAction): Promise<void> {
     await this.request(`/api/servers/${uuid}/power`, {
       method: 'POST',
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({
+        action,
+        state: action,
+        power_action: action,
+      }),
     });
   }
 

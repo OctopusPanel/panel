@@ -166,8 +166,14 @@ function sendCommand() {
 async function handlePower(action: PowerAction) {
   try {
     await serverStore.sendPowerAction(props.serverUuid, action);
+    term?.writeln(`\x1b[33m[OctopusPanel] Power action '${action}' triggered.\x1b[0m`);
+    if (action === PowerAction.START && (!socket || socket.readyState !== WebSocket.OPEN)) {
+      setTimeout(() => {
+        connectSocket();
+      }, 1200);
+    }
   } catch (err: any) {
-    const errText = err?.message || err?.code || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+    const errText = err?.params?.error || err?.message || err?.code || (typeof err === 'object' ? JSON.stringify(err) : String(err));
     term?.writeln(`\x1b[31m[Power Error] ${errText}\x1b[0m`);
   }
 }

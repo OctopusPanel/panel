@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { db, servers } from '@octopus/database';
+import { db, servers, allocations } from '@octopus/database';
 import { eq } from 'drizzle-orm';
 import { ServerPowerActionSchema, ApiErrorCode, PowerAction, Server, SessionUser, UserRole } from '@octopus/shared';
 import { requireAuth } from '../../core/auth.js';
@@ -27,6 +27,15 @@ clientPowerRouter.post('/:id/power', async (c) => {
 
   if (!server) {
     return jsonError(c, ApiErrorCode.SERVER_NOT_FOUND, 404, { id: param }, 'Server not found');
+  }
+
+  if (!server.allocation) {
+    const fallbackAlloc = await db.query.allocations.findFirst({
+      where: eq(allocations.serverId, server.id),
+    });
+    if (fallbackAlloc) {
+      (server as any).allocation = fallbackAlloc;
+    }
   }
 
   if (server.isSuspended) {
@@ -71,6 +80,13 @@ clientPowerRouter.post('/:id/power', async (c) => {
       data: { message: `Power action '${action}' dispatched successfully` },
     });
   } catch (err: any) {
-    return jsonError(c, ApiErrorCode.SERVER_POWER_ACTION_FAILED, 500, { error: err.message });
+    console.error(`[Power API] Power action '${action}' failed for server ${server.uuid}:`, err);
+    return jsonError(
+      c,
+      ApiErrorCode.SERVER_POWER_ACTION_FAILED,
+      500,
+      { error: err.message },
+      err.message || `Power action '${action}' failed`,
+    );
   }
 });

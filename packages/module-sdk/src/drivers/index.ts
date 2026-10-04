@@ -52,6 +52,7 @@ export class TentacleProviderDriver implements ServerProviderDriver {
 
   async create(server: Server, options?: ProvisionOptions): Promise<void> {
     const client = await this.clientFactory(server.nodeId);
+    const bp = (server as any).blueprint;
     let installConfig = undefined;
     if (options?.installScript && options?.installContainer) {
       installConfig = {
@@ -59,7 +60,14 @@ export class TentacleProviderDriver implements ServerProviderDriver {
         script: options.installScript,
         entrypoint: options.installEntrypoint || undefined,
       };
+    } else if (bp?.installScript && bp?.installContainer) {
+      installConfig = {
+        image: bp.installContainer,
+        script: bp.installScript,
+        entrypoint: bp.installEntrypoint || undefined,
+      };
     }
+
     const ports = options?.ports || [];
     if (ports.length === 0) {
       const mainAlloc = (server as any).allocation;
@@ -84,20 +92,75 @@ export class TentacleProviderDriver implements ServerProviderDriver {
           }
         }
       }
+      if (ports.length === 0 && (server as any).environment?.SERVER_PORT) {
+        const p = parseInt(String((server as any).environment.SERVER_PORT), 10);
+        if (!isNaN(p) && p > 0) {
+          ports.push({
+            hostPort: p,
+            containerPort: p,
+            protocol: 'tcp',
+            hostIp: '0.0.0.0',
+          });
+        }
+      }
+    }
+
+    const finalEnv: Record<string, string> = {};
+    if (Array.isArray(bp?.variables)) {
+      for (const v of bp.variables) {
+        if (v.envVariable) {
+          finalEnv[v.envVariable] = String(v.defaultValue ?? '');
+        }
+      }
+    }
+    if (server.environment && typeof server.environment === 'object') {
+      for (const [k, v] of Object.entries(server.environment)) {
+        if (v !== undefined && v !== null) {
+          finalEnv[k] = String(v);
+        }
+      }
+    }
+    if (options?.extraEnv) {
+      for (const [k, v] of Object.entries(options.extraEnv)) {
+        if (v !== undefined && v !== null) {
+          finalEnv[k] = String(v);
+        }
+      }
+    }
+    if (ports.length > 0) {
+      finalEnv['SERVER_PORT'] = finalEnv['SERVER_PORT'] || String(ports[0].hostPort);
+      finalEnv['SERVER_IP'] = finalEnv['SERVER_IP'] || '0.0.0.0';
+    }
+    finalEnv['SERVER_MEMORY'] = finalEnv['SERVER_MEMORY'] || String(server.memory);
+
+    let dockerImage = server.dockerImage;
+    if (!dockerImage && bp) {
+      dockerImage = bp.dockerImage || (bp.images && typeof bp.images === 'object' ? Object.values(bp.images)[0] : '') || '';
+    }
+    if (!dockerImage) {
+      dockerImage = 'ghcr.io/ptero-eggs/yolks:java_21';
+    }
+
+    let startupCommand = server.startupCommand || bp?.startup || '';
+    for (const [k, v] of Object.entries(finalEnv)) {
+      startupCommand = startupCommand.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), v);
+    }
+    if (ports.length > 0) {
+      startupCommand = startupCommand.replace(/\{\{server\.build\.default\.port\}\}/g, String(ports[0].hostPort));
     }
 
     await client.createServer({
       uuid: server.uuid,
       name: server.name,
-      image: server.dockerImage,
+      image: dockerImage,
       memoryLimitMb: server.memory,
       swapLimitMb: server.swap,
       cpuLimitPercent: server.cpu,
       diskLimitMb: server.disk,
       ioWeight: server.io,
       ports,
-      environment: { ...server.environment, ...(options?.extraEnv || {}) },
-      startupCommand: server.startupCommand,
+      environment: finalEnv,
+      startupCommand,
       installConfig,
     });
 
@@ -117,7 +180,16 @@ export class TentacleProviderDriver implements ServerProviderDriver {
     } catch (err: any) {
       if (err?.message?.includes('404') || err?.message?.toLowerCase()?.includes('not found')) {
         await this.create(server);
-        await client.powerAction(server.uuid, PowerAction.START);
+        try {
+          await new Promise((r) => setTimeout(r, 600));
+          await client.powerAction(server.uuid, PowerAction.START);
+        } catch (startErr: any) {
+          if (startErr?.message?.toLowerCase()?.includes('install') || startErr?.message?.includes('400')) {
+            console.log(`Server ${server.uuid} is currently undergoing installation.`);
+            return;
+          }
+          throw startErr;
+        }
         return;
       }
       throw err;
