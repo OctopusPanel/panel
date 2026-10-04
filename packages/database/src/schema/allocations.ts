@@ -11,6 +11,7 @@ export const allocations = pgTable('allocations', {
   ipAddress: varchar('ip_address', { length: 64 }).notNull(),
   port: integer('port').notNull(),
   alias: varchar('alias', { length: 255 }),
+  note: varchar('note', { length: 255 }),
   serverId: integer('server_id').references((): AnyPgColumn => servers.id, { onDelete: 'set null' }),
   isPrimary: boolean('is_primary').default(false).notNull(),
 });
