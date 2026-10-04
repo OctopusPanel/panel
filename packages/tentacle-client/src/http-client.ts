@@ -25,10 +25,10 @@ export class TentacleHttpClient {
     this.timeoutMs = config.timeoutMs || 15000;
   }
 
-  private async executeFetch<T>(base: string, path: string, options: RequestInit = {}): Promise<T> {
+  private async executeFetch<T>(base: string, path: string, options: RequestInit = {}, timeoutMs?: number): Promise<T> {
     const url = `${base}${path.startsWith('/') ? path : `/${path}`}`;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs || this.timeoutMs);
 
     try {
       const headers = new Headers(options.headers || {});
@@ -58,13 +58,13 @@ export class TentacleHttpClient {
     }
   }
 
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(path: string, options: RequestInit = {}, timeoutMs?: number): Promise<T> {
     try {
-      return await this.executeFetch<T>(this.baseUrl, path, options);
+      return await this.executeFetch<T>(this.baseUrl, path, options, timeoutMs);
     } catch (err: any) {
       if (this.fallbackBaseUrl && this.fallbackBaseUrl !== this.baseUrl) {
         try {
-          return await this.executeFetch<T>(this.fallbackBaseUrl, path, options);
+          return await this.executeFetch<T>(this.fallbackBaseUrl, path, options, timeoutMs);
         } catch {
           // Both failed, proceed with original error
         }
@@ -74,8 +74,8 @@ export class TentacleHttpClient {
   }
 
   // System & Health
-  async getHealth(): Promise<{ status: string; service: string; version: string }> {
-    return this.request('/health');
+  async getHealth(timeoutMs?: number): Promise<{ status: string; service: string; version: string }> {
+    return this.request('/health', {}, timeoutMs || 3000);
   }
 
   async getSystemStatus(): Promise<TentacleSystemStatus> {
