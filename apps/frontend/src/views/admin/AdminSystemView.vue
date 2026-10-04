@@ -61,12 +61,16 @@ const terminalContainer = ref<HTMLDivElement | null>(null);
 
 let unsubscribeStream: (() => void) | null = null;
 
+// Daemon target version (from updateInfo.daemon or fallback)
+const daemonTargetVersion = computed(() => {
+  return (updateInfo.value as any)?.daemon?.latestVersion || 'v0.1.8';
+});
+
 // Outdated Nodes Computation
 const outdatedNodes = computed(() => {
-  if (!updateInfo.value) return [];
-  const targetVer = updateInfo.value.latestVersion.replace(/^v/, '');
+  const targetVer = daemonTargetVersion.value.replace(/^v/, '');
   return nodes.value.filter((n) => {
-    const nodeVer = (n.daemonVersion || 'v0.1.0').replace(/^v/, '');
+    const nodeVer = (n.daemonVersion || 'v0.1.7').replace(/^v/, '');
     return nodeVer !== targetVer;
   });
 });
@@ -166,13 +170,16 @@ async function updateNode(node: any) {
   if (updatingNodeIds.value.has(node.id)) return;
   updatingNodeIds.value.add(node.id);
 
+  const targetVer = daemonTargetVersion.value;
   try {
-    await ApiService.updateNode(node.id, {
-      targetVersion: updateInfo.value?.latestVersion || 'v0.2.0',
+    const res = await ApiService.updateNode(node.id, {
+      targetVersion: targetVer,
     });
-    node.daemonVersion = updateInfo.value?.latestVersion || 'v0.2.0';
-  } catch (err) {
+    node.daemonVersion = targetVer;
+    alert(`Node ${node.name || node.id} update initiated: ${res.message || 'success'}`);
+  } catch (err: any) {
     console.error(`Failed to update node ${node.id}:`, err);
+    alert(`Failed to update node ${node.name || node.id}: ${err?.message || err}`);
   } finally {
     updatingNodeIds.value.delete(node.id);
   }
@@ -424,12 +431,12 @@ onUnmounted(() => {
                 <!-- Daemon Version -->
                 <td class="py-3 px-4">
                   <div class="flex items-center gap-2 font-mono">
-                    <span class="text-slate-200">{{ node.daemonVersion || 'v0.1.0' }}</span>
+                    <span class="text-slate-200">{{ node.daemonVersion || 'v0.1.7' }}</span>
                     <span
-                      v-if="(node.daemonVersion || 'v0.1.0').replace(/^v/, '') !== (updateInfo?.latestVersion || '0.2.0').replace(/^v/, '')"
+                      v-if="(node.daemonVersion || 'v0.1.7').replace(/^v/, '') !== daemonTargetVersion.replace(/^v/, '')"
                       class="px-1.5 py-0.5 text-[9px] rounded font-sans font-medium bg-amber-500/15 text-amber-400 border border-amber-500/25"
                     >
-                      Update to v{{ updateInfo?.latestVersion || '0.2.0' }}
+                      Update to {{ daemonTargetVersion }}
                     </span>
                     <span
                       v-else
@@ -442,16 +449,20 @@ onUnmounted(() => {
 
                 <!-- Daemon Status -->
                 <td class="py-3 px-4">
-                  <span class="inline-flex items-center gap-1.5 text-emerald-400 font-medium text-[11px]">
+                  <span v-if="node.isOnline !== false" class="inline-flex items-center gap-1.5 text-emerald-400 font-medium text-[11px]">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Online
+                  </span>
+                  <span v-else class="inline-flex items-center gap-1.5 text-slate-400 font-medium text-[11px]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                    Offline
                   </span>
                 </td>
 
                 <!-- Action Button -->
                 <td class="py-3 px-4 text-right">
                   <button
-                    v-if="(node.daemonVersion || 'v0.1.0').replace(/^v/, '') !== (updateInfo?.latestVersion || '0.2.0').replace(/^v/, '')"
+                    v-if="(node.daemonVersion || 'v0.1.7').replace(/^v/, '') !== daemonTargetVersion.replace(/^v/, '')"
                     @click="updateNode(node)"
                     :disabled="updatingNodeIds.has(node.id)"
                     class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 transition-all disabled:opacity-50"

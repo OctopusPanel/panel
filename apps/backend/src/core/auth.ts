@@ -39,22 +39,32 @@ export function generateWsToken(userId: number, serverUuid: string): string {
   );
 }
 
-export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
+export function extractToken(c: any): string | null {
   const authHeader = c.req.header('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  const queryToken = c.req.query('token');
+  if (queryToken && typeof queryToken === 'string' && queryToken.trim().length > 0) {
+    return queryToken.trim();
+  }
+  return null;
+}
+
+export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
+  const token = extractToken(c);
+  if (!token) {
     return c.json(
       {
         success: false,
         error: {
           code: ApiErrorCode.AUTH_UNAUTHORIZED,
-          message: 'Missing or invalid Authorization header',
+          message: 'Missing or invalid authentication token',
         },
       },
       401,
     );
   }
-
-  const token = authHeader.substring(7);
   try {
     const payload = jwt.verify(token, config.jwtSecret) as unknown as {
       sub: number;
@@ -108,21 +118,20 @@ export const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
   const user = c.get('user');
   if (!user) {
     // If auth hasn't run yet, run auth check first
-    const authHeader = c.req.header('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = extractToken(c);
+    if (!token) {
       return c.json(
         {
           success: false,
           error: {
             code: ApiErrorCode.AUTH_UNAUTHORIZED,
-            message: 'Missing or invalid Authorization header',
+            message: 'Missing or invalid authentication token',
           },
         },
         401,
       );
     }
 
-    const token = authHeader.substring(7);
     try {
       const payload = jwt.verify(token, config.jwtSecret) as unknown as {
         sub: number;
