@@ -14,9 +14,9 @@ export type EggVariable = z.infer<typeof EggVariableSchema>;
 
 export const EggConfigFileSchema = z.object({
   file: z.string(),
-  parser: z.enum(['file', 'yaml', 'json', 'properties', 'ini']).default('file'),
-  findAndReplace: z.record(z.string(), z.string()).optional(),
-  insertAfter: z.record(z.string(), z.string()).optional(),
+  parser: z.string().default('file'),
+  findAndReplace: z.record(z.string(), z.any()).optional(),
+  insertAfter: z.record(z.string(), z.any()).optional(),
 });
 
 export type EggConfigFile = z.infer<typeof EggConfigFileSchema>;
@@ -62,58 +62,109 @@ export type CreateBlueprintInput = z.infer<typeof CreateBlueprintSchema>;
 export const UpdateBlueprintSchema = CreateBlueprintSchema.partial();
 export type UpdateBlueprintInput = z.infer<typeof UpdateBlueprintSchema>;
 
+const preprocessJson = (val: unknown) => {
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed || trimmed === '{}') return {};
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return {};
+    }
+  }
+  return val ?? {};
+};
+
 /**
  * Schema for standard Pterodactyl Egg export files (egg-*.json)
  */
-export const PterodactylEggFileSchema = z.object({
-  meta: z.object({
-    version: z.string(),
-    update_url: z.string().nullable().optional(),
-  }),
-  name: z.string(),
-  author: z.string(),
-  description: z.string().nullable().optional(),
-  features: z.array(z.string()).nullable().optional(),
-  docker_images: z.record(z.string(), z.string()).optional(),
-  image: z.string().optional(),
-  startup: z.string(),
-  config: z
-    .object({
-      files: z.record(z.string(), z.any()).optional(),
-      startup: z
-        .object({
-          done: z.union([z.string(), z.array(z.string())]).optional(),
-          userInteraction: z.array(z.string()).optional(),
-        })
-        .optional(),
-      stop: z.string().optional(),
-      logs: z.record(z.string(), z.any()).optional(),
-    })
-    .optional(),
-  scripts: z
-    .object({
-      installation: z
-        .object({
-          script: z.string().optional(),
-          container: z.string().optional(),
-          entrypoint: z.string().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-  variables: z
-    .array(
-      z.object({
-        name: z.string(),
-        description: z.string().nullable().optional(),
-        env_variable: z.string(),
-        default_value: z.union([z.string(), z.number()]).default(''),
-        user_viewable: z.union([z.boolean(), z.number()]).default(true),
-        user_editable: z.union([z.boolean(), z.number()]).default(true),
-        rules: z.string().default('nullable|string'),
-      }),
-    )
-    .optional(),
-});
+export const PterodactylEggFileSchema = z
+  .object({
+    _comment: z.string().optional(),
+    meta: z
+      .object({
+        version: z.string().optional(),
+        update_url: z.string().nullable().optional(),
+      })
+      .passthrough()
+      .optional(),
+    exported_at: z.string().optional(),
+    name: z.string(),
+    author: z.string().optional().default('Pterodactyl Community'),
+    description: z.string().nullable().optional(),
+    features: z.array(z.string()).nullable().optional(),
+    docker_images: z.union([z.record(z.string(), z.string()), z.array(z.string())]).optional(),
+    image: z.string().nullable().optional(),
+    file_denylist: z.array(z.string()).optional(),
+    startup: z.string(),
+    config: z
+      .object({
+        files: z.preprocess(preprocessJson, z.record(z.string(), z.any()).optional().default({})),
+        startup: z.preprocess(
+          preprocessJson,
+          z
+            .union([
+              z
+                .object({
+                  done: z.union([z.string(), z.array(z.string())]).optional(),
+                  userInteraction: z.array(z.string()).optional(),
+                })
+                .passthrough(),
+              z.record(z.string(), z.any()),
+            ])
+            .optional()
+            .default({}),
+        ),
+        stop: z.string().optional(),
+        logs: z.preprocess(preprocessJson, z.record(z.string(), z.any()).optional().default({})),
+      })
+      .passthrough()
+      .optional(),
+    scripts: z
+      .object({
+        installation: z
+          .object({
+            script: z.string().optional(),
+            container: z.string().optional(),
+            entrypoint: z.string().optional(),
+          })
+          .passthrough()
+          .optional(),
+      })
+      .passthrough()
+      .optional(),
+    variables: z
+      .array(
+        z
+          .object({
+            name: z.string().default('Variable'),
+            description: z.string().nullable().optional(),
+            env_variable: z.string(),
+            default_value: z
+              .union([z.string(), z.number(), z.boolean()])
+              .nullable()
+              .optional()
+              .transform((v) => (v === null || v === undefined ? '' : String(v))),
+            user_viewable: z
+              .union([z.boolean(), z.number()])
+              .nullish()
+              .transform((v) => v === true || v === 1),
+            user_editable: z
+              .union([z.boolean(), z.number()])
+              .nullish()
+              .transform((v) => v === true || v === 1),
+            rules: z
+              .string()
+              .nullable()
+              .optional()
+              .transform((v) => v || 'nullable|string'),
+            field_type: z.string().nullable().optional(),
+          })
+          .passthrough(),
+      )
+      .optional()
+      .default([]),
+  })
+  .passthrough();
 
 export type PterodactylEggFile = z.infer<typeof PterodactylEggFileSchema>;

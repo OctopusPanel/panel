@@ -63,7 +63,11 @@ adminBlueprintsRouter.post('/import-egg', async (c) => {
       201,
     );
   } catch (err: any) {
-    return jsonError(c, ApiErrorCode.BLUEPRINT_PARSER_ERROR, 422, { error: err.message }, 'Failed to parse Pterodactyl egg');
+    let message = err.message || 'Failed to parse Pterodactyl egg';
+    if (err.errors && Array.isArray(err.errors)) {
+      message = err.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ');
+    }
+    return jsonError(c, ApiErrorCode.BLUEPRINT_PARSER_ERROR, 422, { error: message }, `Failed to parse Pterodactyl egg: ${message}`);
   }
 });
 
