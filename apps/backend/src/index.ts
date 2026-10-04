@@ -7,6 +7,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
+import { ensureCockpitTables } from '@octopus/database';
 import { apiRouter } from './api/routes.js';
 import { registerDefaultProviders } from './core/tentacle-manager.js';
 import { moduleLoader } from './core/module-loader.js';
@@ -103,6 +104,13 @@ if (frontendDist) {
 
 async function bootstrap() {
   console.log('🐙 Initializing OctopusPanel Core Engine...');
+
+  // Auto-verify database cockpit tables
+  try {
+    await ensureCockpitTables(config.databaseUrl);
+  } catch (err) {
+    console.warn('Database cockpit table bootstrap check skipped/failed:', err);
+  }
 
   // Register Built-in Providers
   registerDefaultProviders();
