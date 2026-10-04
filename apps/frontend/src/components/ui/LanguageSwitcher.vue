@@ -17,7 +17,7 @@ function onChange(e: Event) {
     <select
       :value="locale"
       @change="onChange"
-      class="bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 rounded-md px-2 py-1 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500 transition-colors"
+      class="bg-surface-card hover:bg-surface-elevated text-slate-200 border border-surface-border rounded-md px-2 py-1 outline-none cursor-pointer focus:ring-1 focus:ring-primary transition-colors"
     >
       <option value="en">English (EN)</option>
       <option value="de">Deutsch (DE)</option>

@@ -32,14 +32,14 @@ async function initTerminal() {
     fontFamily: 'Consolas, "Courier New", Courier, monospace',
     fontSize: 13,
     theme: {
-      background: '#0d1117',
+      background: '#08090d',
       foreground: '#c9d1d9',
-      cursor: '#58a6ff',
-      black: '#484f58',
+      cursor: '#db982b',
+      black: '#1a1d2b',
       red: '#ff7b72',
       green: '#3fb950',
-      yellow: '#d29922',
-      blue: '#58a6ff',
+      yellow: '#db982b',
+      blue: '#60a5fa',
       magenta: '#bc8cff',
       cyan: '#39c5cf',
       white: '#b1bac4',
@@ -213,17 +213,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-[560px] bg-[#0d1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+  <div class="flex flex-col h-[560px] bg-surface-deep border border-surface-border rounded-xl overflow-hidden shadow-2xl">
     <!-- Header Controls -->
-    <div class="flex items-center justify-between px-4 py-2.5 bg-[#161b22] border-b border-slate-800">
+    <div class="flex items-center justify-between px-4 py-2.5 bg-surface-card border-b border-surface-border">
       <div class="flex items-center space-x-3">
-        <TerminalIcon class="w-4 h-4 text-blue-400" />
+        <TerminalIcon class="w-4 h-4 text-primary" />
         <span class="text-xs font-mono font-semibold text-slate-200">{{ t('terminal.title') }}</span>
         <span
           class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
-          :class="isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
+          :class="isConnected ? 'bg-status-online/10 text-status-online border border-status-online/20' : 'bg-status-offline/10 text-status-offline border border-status-offline/20'"
         >
-          <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></span>
+          <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="isConnected ? 'bg-status-online animate-pulse' : 'bg-status-offline'"></span>
           {{ isConnected ? t('terminal.statusConnected') : t('terminal.statusDisconnected') }}
         </span>
       </div>
@@ -232,14 +232,14 @@ onBeforeUnmount(() => {
       <div class="flex items-center space-x-2">
         <button
           @click="handlePower(PowerAction.START)"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-status-online hover:bg-emerald-500 text-black font-semibold transition-colors"
         >
           <Power class="w-3 h-3 mr-1" />
           {{ t('servers.start') }}
         </button>
         <button
           @click="handlePower(PowerAction.RESTART)"
-          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+          class="flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-primary hover:bg-primary-dark text-black font-semibold transition-colors"
         >
           <RotateCcw class="w-3 h-3 mr-1" />
           {{ t('servers.restart') }}
@@ -253,7 +253,7 @@ onBeforeUnmount(() => {
         </button>
         <button
           @click="clearConsole"
-          class="px-2 py-1 text-xs text-slate-400 hover:text-slate-200 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
+          class="px-2 py-1 text-xs text-slate-400 hover:text-slate-200 border border-surface-border rounded-lg hover:bg-surface-elevated transition-colors"
         >
           {{ t('terminal.clearConsole') }}
         </button>
@@ -264,8 +264,8 @@ onBeforeUnmount(() => {
     <div ref="terminalContainer" class="flex-1 p-3 overflow-hidden"></div>
 
     <!-- Command Input Bar -->
-    <div class="flex items-center p-2.5 bg-[#161b22] border-t border-slate-800">
-      <span class="text-blue-400 font-mono text-sm px-2 select-none">&gt;</span>
+    <div class="flex items-center p-2.5 bg-surface-card border-t border-surface-border">
+      <span class="text-primary font-mono text-sm px-2 select-none">&gt;</span>
       <input
         v-model="commandInput"
         @keyup.enter="sendCommand"
@@ -275,7 +275,7 @@ onBeforeUnmount(() => {
       />
       <button
         @click="sendCommand"
-        class="p-1.5 text-slate-400 hover:text-blue-400 rounded-lg hover:bg-slate-800 transition-colors"
+        class="p-1.5 text-slate-400 hover:text-primary rounded-lg hover:bg-surface-elevated transition-colors"
       >
         <Send class="w-3.5 h-3.5" />
       </button>

@@ -151,18 +151,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-[#161b22] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+  <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-xl">
     <!-- Toolbar -->
-    <div class="flex items-center justify-between p-3.5 border-b border-slate-800 bg-[#0d1117]">
+    <div class="flex items-center justify-between p-3.5 border-b border-surface-border bg-surface-deep">
       <div class="flex items-center space-x-2">
         <button
           v-if="currentDirectory !== '/'"
           @click="navigateUp"
-          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+          class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-surface-elevated transition-colors"
         >
           <ArrowLeft class="w-4 h-4" />
         </button>
-        <span class="text-xs font-mono text-slate-300 bg-slate-800/80 px-2.5 py-1 rounded-md">
+        <span class="text-xs font-mono text-slate-300 bg-surface-elevated px-2.5 py-1 rounded-md">
           {{ currentDirectory }}
         </span>
       </div>
@@ -170,14 +170,14 @@ onMounted(() => {
       <div class="flex items-center space-x-2">
         <button
           @click="showNewFileModal = true"
-          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+          class="flex items-center px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-black transition-colors"
         >
           <FilePlus class="w-3.5 h-3.5 mr-1.5" />
           {{ t('files.newFile') }}
         </button>
         <button
           @click="showNewFolderModal = true"
-          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 transition-colors"
+          class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg border border-surface-border hover:bg-surface-elevated text-slate-300 transition-colors"
         >
           <FolderPlus class="w-3.5 h-3.5 mr-1.5" />
           {{ t('files.newDirectory') }}
@@ -196,7 +196,7 @@ onMounted(() => {
       </div>
 
       <table v-else class="w-full text-left text-xs">
-        <thead class="bg-[#0d1117]/50 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <thead class="bg-surface-deep text-slate-400 uppercase tracking-wider text-[10px] border-b border-surface-border">
           <tr>
             <th class="py-2.5 px-4 font-semibold">{{ t('servers.name') }}</th>
             <th class="py-2.5 px-4 font-semibold">{{ t('files.size') }}</th>
@@ -242,21 +242,21 @@ onMounted(() => {
       v-if="editingFile"
       class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
     >
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl w-full max-w-4xl flex flex-col h-[80vh] shadow-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-[#0d1117]">
+      <div class="bg-surface-card border border-surface-border rounded-xl w-full max-w-4xl flex flex-col h-[80vh] shadow-2xl overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-surface-border bg-surface-deep">
           <span class="text-xs font-mono text-slate-200 font-medium">{{ editingFile }}</span>
           <div class="flex items-center space-x-2">
             <button
               @click="saveFile"
               :disabled="isSaving"
-              class="flex items-center px-3 py-1 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+              class="flex items-center px-3 py-1 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-dark text-black transition-colors"
             >
               <Save class="w-3.5 h-3.5 mr-1.5" />
               {{ t('files.save') }}
             </button>
             <button
               @click="editingFile = null"
-              class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-surface-elevated transition-colors"
             >
               <X class="w-4 h-4" />
             </button>
@@ -264,7 +264,7 @@ onMounted(() => {
         </div>
         <textarea
           v-model="fileContent"
-          class="flex-1 w-full bg-[#0d1117] p-4 text-slate-200 font-mono text-xs outline-none resize-none border-none leading-relaxed"
+          class="flex-1 w-full bg-surface-deep p-4 text-slate-200 font-mono text-xs outline-none resize-none border-none leading-relaxed"
           spellcheck="false"
         ></textarea>
       </div>
@@ -272,19 +272,19 @@ onMounted(() => {
 
     <!-- New Folder Modal -->
     <div v-if="showNewFolderModal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-5 w-full max-w-md shadow-2xl">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5 w-full max-w-md shadow-2xl">
         <h3 class="text-sm font-semibold text-slate-100 mb-3">{{ t('files.newDirectory') }}</h3>
         <input
           v-model="newFolderName"
           type="text"
           placeholder="Folder name"
-          class="w-full bg-[#0d1117] border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 mb-4"
+          class="w-full bg-surface-deep border border-surface-border rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary mb-4"
         />
         <div class="flex justify-end space-x-2">
-          <button @click="showNewFolderModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+          <button @click="showNewFolderModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createFolder" class="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-lg">
+          <button @click="createFolder" class="px-3 py-1.5 text-xs bg-primary hover:bg-primary-dark text-black font-semibold rounded-lg">
             {{ t('common.create') }}
           </button>
         </div>
@@ -293,19 +293,19 @@ onMounted(() => {
 
     <!-- New File Modal -->
     <div v-if="showNewFileModal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div class="bg-[#161b22] border border-slate-800 rounded-xl p-5 w-full max-w-md shadow-2xl">
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5 w-full max-w-md shadow-2xl">
         <h3 class="text-sm font-semibold text-slate-100 mb-3">{{ t('files.newFile') }}</h3>
         <input
           v-model="newFileName"
           type="text"
           placeholder="e.g. server.properties"
-          class="w-full bg-[#0d1117] border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 mb-4"
+          class="w-full bg-surface-deep border border-surface-border rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary mb-4"
         />
         <div class="flex justify-end space-x-2">
-          <button @click="showNewFileModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg">
+          <button @click="showNewFileModal = false" class="px-3 py-1.5 text-xs text-slate-300 hover:bg-surface-elevated rounded-lg">
             {{ t('common.cancel') }}
           </button>
-          <button @click="createFile" class="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-lg">
+          <button @click="createFile" class="px-3 py-1.5 text-xs bg-primary hover:bg-primary-dark text-black font-semibold rounded-lg">
             {{ t('common.create') }}
           </button>
         </div>
