@@ -2,10 +2,17 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { apiRouter } from './api/routes.js';
 import { registerDefaultProviders } from './core/tentacle-manager.js';
 import { moduleLoader } from './core/module-loader.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = new Hono();
 
@@ -36,15 +43,36 @@ app.get('/api/system/health', (c) => {
   });
 });
 
-// Root fallback / health
-app.get('/', (c) => {
-  return c.json({
-    name: 'OctopusPanel API',
-    version: '0.1.0',
-    documentation: '/docs',
-    status: 'running',
+// Locate frontend dist directory across monorepo layouts
+const candidateFrontendDirs = [
+  path.resolve(process.cwd(), 'apps/frontend/dist'),
+  path.resolve(__dirname, '../../../frontend/dist'),
+  path.resolve(__dirname, '../../frontend/dist'),
+];
+const frontendDist = candidateFrontendDirs.find((dir) => fs.existsSync(dir));
+
+if (frontendDist) {
+  const relativeRoot = path.relative(process.cwd(), frontendDist).replace(/\\/g, '/');
+  app.use('/*', serveStatic({ root: relativeRoot }));
+  app.get('*', (c) => {
+    const indexPath = path.join(frontendDist, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      const html = fs.readFileSync(indexPath, 'utf-8');
+      return c.html(html);
+    }
+    return c.text('OctopusPanel Frontend Loading...', 404);
   });
-});
+} else {
+  // Root fallback when frontend not yet compiled
+  app.get('/', (c) => {
+    return c.json({
+      name: 'OctopusPanel API',
+      version: '0.1.0',
+      documentation: '/docs',
+      status: 'running',
+    });
+  });
+}
 
 async function bootstrap() {
   console.log('🐙 Initializing OctopusPanel Core Engine...');

@@ -615,9 +615,9 @@ install_base_tools() {
     if [ "$OS_FAMILY" = "debian" ]; then
         export DEBIAN_FRONTEND=noninteractive
         apt-get update -y
-        apt-get install -y curl wget git tar openssl ca-certificates gnupg sudo
+        apt-get install -y curl wget git tar openssl ca-certificates gnupg sudo psmisc
     elif [ "$OS_FAMILY" = "rhel" ]; then
-        $PKG_MANAGER install -y curl wget git tar openssl ca-certificates gnupg2 sudo
+        $PKG_MANAGER install -y curl wget git tar openssl ca-certificates gnupg2 sudo psmisc
     fi
 }
 
@@ -1012,7 +1012,14 @@ EOF
 
     if command -v systemctl &>/dev/null; then
         systemctl daemon-reload
-        systemctl enable --now octopus-panel
+        systemctl enable octopus-panel
+        # Stop any stale instance from a previous test/install
+        systemctl stop octopus-panel 2>/dev/null || true
+        # Clean up any lingering process holding the panel port
+        if command -v fuser &>/dev/null; then
+            fuser -k -9 "${PANEL_PORT}/tcp" 2>/dev/null || true
+        fi
+        systemctl restart octopus-panel || systemctl start octopus-panel
     fi
 }
 
@@ -1023,7 +1030,7 @@ verify_backend_health() {
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Polling backend health endpoint on port ${PANEL_PORT}" >> "${LOG_FILE}"
 
-    local max_retries=15
+    local max_retries=30
     local retries=0
     local health_url="http://127.0.0.1:${PANEL_PORT}/api/system/health"
     local health_url_v1="http://127.0.0.1:${PANEL_PORT}/api/v1/system/health"
@@ -1041,6 +1048,9 @@ verify_backend_health() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Health check timed out after ${max_retries}s" >> "${LOG_FILE}"
     if command -v systemctl &>/dev/null; then
         systemctl status octopus-panel >> "${LOG_FILE}" 2>&1 || true
+    fi
+    if command -v journalctl &>/dev/null; then
+        journalctl -u octopus-panel -n 40 --no-pager >> "${LOG_FILE}" 2>&1 || true
     fi
     return 1
 }
