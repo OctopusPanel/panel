@@ -28,10 +28,7 @@ adminNodesRouter.get('/', async (c) => {
 
       try {
         const client = await getTentacleClientForNode(n.id);
-        const health = await Promise.race([
-          client.getHealth(),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
-        ]);
+        const health = await client.getHealth(2500);
         if (health && health.status === 'healthy') {
           isOnline = true;
           if (health.version) {
