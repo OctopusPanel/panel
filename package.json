@@ -12,7 +12,8 @@
     "clean": "turbo run clean",
     "db:generate": "pnpm --filter @octopus/database db:generate",
     "db:migrate": "pnpm --filter @octopus/database db:migrate",
-    "db:seed": "pnpm --filter @octopus/database db:seed"
+    "db:seed": "pnpm --filter @octopus/database db:seed",
+    "reset-admin": "pnpm --filter @octopus/database reset-admin"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
