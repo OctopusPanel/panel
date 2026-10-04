@@ -873,6 +873,10 @@ build_and_migrate_panel() {
 
     local sanitized_db_url
     sanitized_db_url="$(echo "${DATABASE_URL}" | sed -E 's/:([^@:]+)@/:****@/')"
+    if [ ! -d "${target_dir}/packages/database/drizzle" ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Drizzle migrations folder missing, generating SQL migrations..." >> "${LOG_FILE}"
+        pnpm --filter @octopus/database db:generate >> "${LOG_FILE}" 2>&1 || true
+    fi
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Executing Drizzle ORM database migrations with ${sanitized_db_url}" >> "${LOG_FILE}"
     DATABASE_URL="${DATABASE_URL}" pnpm run db:migrate
 
