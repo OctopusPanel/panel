@@ -6,7 +6,31 @@ export interface TentacleClientConfig {
   timeoutMs?: number;
 }
 
+export interface TentacleDiskInfo {
+  name: string;
+  mount_point: string;
+  total_space_bytes: number;
+  available_space_bytes: number;
+}
+
+export interface TentacleHostSystemInfo {
+  os_name: string;
+  os_version: string;
+  kernel_version: string;
+  host_name: string;
+  total_memory_bytes: number;
+  used_memory_bytes: number;
+  total_swap_bytes?: number;
+  used_swap_bytes?: number;
+  cpu_count: number;
+  global_cpu_usage_pct: number;
+  disks: TentacleDiskInfo[];
+}
+
 export interface TentacleSystemStatus {
+  node_id?: string | number;
+  node_name?: string;
+  system?: TentacleHostSystemInfo;
   os?: string;
   kernel?: string;
   uptimeSeconds?: number;

@@ -146,6 +146,62 @@ adminNodesRouter.get('/:id/setup-command', async (c) => {
   });
 });
 
+// POST /api/v1/admin/nodes/:id/regenerate-token
+adminNodesRouter.post('/:id/regenerate-token', async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  const node = await db.query.nodes.findFirst({
+    where: eq(nodes.id, id),
+  });
+
+  if (!node) {
+    return jsonError(c, ApiErrorCode.NODE_NOT_FOUND, 404, { id });
+  }
+
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+  await db.update(nodes).set({ tokenHash }).where(eq(nodes.id, id));
+
+  const setupCommand = `curl -sSL ${config.panelUrl}/install-tentacle.sh | bash -s -- --panel-url ${config.panelUrl} --token ${rawToken} --port ${node.apiPort} --sftp-port ${node.sftpPort} --install-docker`;
+
+  return c.json({
+    success: true,
+    data: {
+      command: setupCommand,
+      token: rawToken,
+    },
+  });
+});
+
+// POST /api/v1/admin/nodes/:id/toggle-maintenance
+adminNodesRouter.post('/:id/toggle-maintenance', async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  const node = await db.query.nodes.findFirst({
+    where: eq(nodes.id, id),
+  });
+
+  if (!node) {
+    return jsonError(c, ApiErrorCode.NODE_NOT_FOUND, 404, { id });
+  }
+
+  const [updated] = await db
+    .update(nodes)
+    .set({
+      isMaintenance: !node.isMaintenance,
+      updatedAt: new Date(),
+    })
+    .where(eq(nodes.id, id))
+    .returning();
+
+  return c.json({
+    success: true,
+    data: {
+      isMaintenance: updated.isMaintenance,
+      node: updated,
+    },
+  });
+});
+
 // PUT /api/v1/admin/nodes/:id
 adminNodesRouter.put('/:id', async (c) => {
   const id = parseInt(c.req.param('id'), 10);

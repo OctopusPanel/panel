@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   RefreshCw,
   Sliders,
+  X,
 } from 'lucide-vue-next';
 
 const route = useRoute();
@@ -46,7 +47,7 @@ async function loadNode() {
   try {
     node.value = await ApiService.get<any>(`/admin/nodes/${nodeId}`);
     if (node.value) {
-      rangeIp.value = node.value.fqdn ? '198.51.100.24' : '127.0.0.1';
+      rangeIp.value = node.value.fqdn ? node.value.fqdn : '127.0.0.1';
     }
   } catch (err) {
     console.error('Failed to load node details:', err);
@@ -58,8 +59,10 @@ async function loadNode() {
 async function toggleMaintenance() {
   if (!node.value) return;
   try {
-    const res = await ApiService.post<{ success: boolean; node: any }>(`/admin/nodes/${nodeId}/toggle-maintenance`);
-    if (res.node) {
+    const res = await ApiService.post<any>(`/admin/nodes/${nodeId}/toggle-maintenance`);
+    if (res?.isMaintenance !== undefined) {
+      node.value.isMaintenance = res.isMaintenance;
+    } else if (res?.node?.isMaintenance !== undefined) {
       node.value.isMaintenance = res.node.isMaintenance;
     }
   } catch (err) {
@@ -70,8 +73,8 @@ async function toggleMaintenance() {
 async function regenerateToken() {
   if (!confirm('Regenerating this token will disconnect any running Tentacle daemon until updated! Continue?')) return;
   try {
-    const res = await ApiService.post<{ success: boolean; token: string }>(`/admin/nodes/${nodeId}/regenerate-token`);
-    if (res.token) {
+    const res = await ApiService.post<any>(`/admin/nodes/${nodeId}/regenerate-token`);
+    if (res?.token) {
       node.value.token = res.token;
     }
   } catch (err) {
@@ -106,9 +109,145 @@ async function handleServerPower(srvId: number | string, action: PowerAction) {
   }
 }
 
+const isOnline = computed(() => {
+  if (node.value?.health?.isOnline !== undefined) {
+    return Boolean(node.value.health.isOnline);
+  }
+  return node.value?.daemonStatus === 'online';
+});
+
+const systemTelemetry = computed(() => {
+  const sys = node.value?.health?.system;
+  if (!sys) return null;
+  if (sys.system && typeof sys.system === 'object') {
+    return sys.system;
+  }
+  return sys;
+});
+
+const hostMemoryTotalGb = computed(() => {
+  if (systemTelemetry.value?.total_memory_bytes) {
+    return (systemTelemetry.value.total_memory_bytes / 1024 / 1024 / 1024).toFixed(1);
+  }
+  return ((node.value?.memoryLimit || 16384) / 1024).toFixed(0);
+});
+
+const hostMemoryUsedGb = computed(() => {
+  if (systemTelemetry.value?.used_memory_bytes) {
+    return (systemTelemetry.value.used_memory_bytes / 1024 / 1024 / 1024).toFixed(1);
+  }
+  return ((node.value?.memoryAllocated || 0) / 1024).toFixed(1);
+});
+
+const hostMemoryPercent = computed(() => {
+  if (systemTelemetry.value?.total_memory_bytes && systemTelemetry.value.total_memory_bytes > 0) {
+    return Math.min(100, Math.round((systemTelemetry.value.used_memory_bytes / systemTelemetry.value.total_memory_bytes) * 100));
+  }
+  if (!node.value?.memoryLimit) return 0;
+  return Math.min(100, Math.round(((node.value.memoryAllocated || 0) / node.value.memoryLimit) * 100));
+});
+
+const hostMemoryFreeGb = computed(() => {
+  if (systemTelemetry.value?.total_memory_bytes) {
+    const freeBytes = Math.max(0, systemTelemetry.value.total_memory_bytes - (systemTelemetry.value.used_memory_bytes || 0));
+    return (freeBytes / 1024 / 1024 / 1024).toFixed(1);
+  }
+  return (((node.value?.memoryLimit || 16384) - (node.value?.memoryAllocated || 0)) / 1024).toFixed(1);
+});
+
+const allocatedMemoryGb = computed(() => {
+  return ((node.value?.memoryAllocated || 0) / 1024).toFixed(1);
+});
+
+const primaryDisk = computed(() => {
+  const disks = systemTelemetry.value?.disks;
+  if (!Array.isArray(disks) || disks.length === 0) return null;
+  return disks.find((d: any) => d.mount_point === '/') || disks[0];
+});
+
+const hostDiskTotalGb = computed(() => {
+  if (primaryDisk.value?.total_space_bytes) {
+    return (primaryDisk.value.total_space_bytes / 1024 / 1024 / 1024).toFixed(1);
+  }
+  return ((node.value?.diskLimit || 500000) / 1024).toFixed(0);
+});
+
+const hostDiskUsedGb = computed(() => {
+  if (primaryDisk.value?.total_space_bytes && primaryDisk.value?.available_space_bytes !== undefined) {
+    const used = Math.max(0, primaryDisk.value.total_space_bytes - primaryDisk.value.available_space_bytes);
+    return (used / 1024 / 1024 / 1024).toFixed(1);
+  }
+  return ((node.value?.diskAllocated || 0) / 1024).toFixed(1);
+});
+
+const hostDiskPercent = computed(() => {
+  if (primaryDisk.value?.total_space_bytes && primaryDisk.value.total_space_bytes > 0) {
+    const used = primaryDisk.value.total_space_bytes - primaryDisk.value.available_space_bytes;
+    return Math.min(100, Math.round((used / primaryDisk.value.total_space_bytes) * 100));
+  }
+  if (!node.value?.diskLimit) return 0;
+  return Math.min(100, Math.round(((node.value.diskAllocated || 0) / node.value.diskLimit) * 100));
+});
+
+const hostDiskDescription = computed(() => {
+  if (primaryDisk.value) {
+    return `${primaryDisk.value.mount_point} (${primaryDisk.value.name || 'System Volume'})`;
+  }
+  return 'System Storage Pool';
+});
+
+const hostCpuCores = computed(() => {
+  if (systemTelemetry.value?.cpu_count) {
+    return `${systemTelemetry.value.cpu_count} Cores`;
+  }
+  return `${node.value?.cpuLimit ? node.value.cpuLimit + '%' : 'Host CPU'}`;
+});
+
+const hostCpuUsagePct = computed(() => {
+  if (typeof systemTelemetry.value?.global_cpu_usage_pct === 'number') {
+    return `${systemTelemetry.value.global_cpu_usage_pct.toFixed(1)}%`;
+  }
+  return null;
+});
+
+const hostName = computed(() => {
+  return systemTelemetry.value?.host_name || node.value?.fqdn || 'Local Host';
+});
+
+const hostOs = computed(() => {
+  if (systemTelemetry.value?.os_name) {
+    return `${systemTelemetry.value.os_name} ${systemTelemetry.value.os_version || ''}`.trim();
+  }
+  return isOnline.value ? 'Linux' : 'Unavailable';
+});
+
+const hostKernel = computed(() => {
+  if (systemTelemetry.value?.kernel_version) {
+    return systemTelemetry.value.kernel_version;
+  }
+  return isOnline.value ? 'Linux' : 'Unavailable';
+});
+
+const daemonVersion = computed(() => {
+  return node.value?.health?.version ? `Tentacle v${node.value.health.version}` : 'Tentacle Daemon';
+});
+
+const panelBaseUrl = computed(() => {
+  if (typeof window !== 'undefined' && window.location) {
+    return window.location.origin;
+  }
+  return 'http://localhost:5173';
+});
+
+const setupCommand = computed(() => {
+  const token = node.value?.token || '<NODE_TOKEN>';
+  const port = node.value?.apiPort || 8080;
+  const sftpPort = node.value?.sftpPort || 2022;
+  return `curl -sSL ${panelBaseUrl.value}/install-tentacle.sh | bash -s -- --panel-url ${panelBaseUrl.value} --token ${token} --port ${port} --sftp-port ${sftpPort} --install-docker`;
+});
+
 function copySetupCommand() {
-  const cmd = `curl -sSL https://get.octopuspanel.com/tentacle/install.sh | sudo bash -s -- --token ${node.value?.token} --panel-url http://localhost:5173`;
-  navigator.clipboard.writeText(cmd);
+  navigator.clipboard.writeText(setupCommand.value);
   copiedCommand.value = true;
   setTimeout(() => {
     copiedCommand.value = false;
@@ -122,16 +261,6 @@ function copyToken() {
     copiedToken.value = false;
   }, 2000);
 }
-
-const ramPercent = computed(() => {
-  if (!node.value?.memoryLimit) return 0;
-  return Math.min(100, Math.round(((node.value.memoryAllocated || 0) / node.value.memoryLimit) * 100));
-});
-
-const diskPercent = computed(() => {
-  if (!node.value?.diskLimit) return 0;
-  return Math.min(100, Math.round(((node.value.diskAllocated || 0) / node.value.diskLimit) * 100));
-});
 
 onMounted(() => {
   loadNode();
@@ -158,10 +287,13 @@ onMounted(() => {
             </h1>
             <span
               class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
-              :class="node?.daemonStatus === 'online' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
+              :class="isOnline ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
             >
-              <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-emerald-400 animate-pulse"></span>
-              {{ node?.daemonStatus?.toUpperCase() || 'ONLINE' }}
+              <span
+                class="w-1.5 h-1.5 rounded-full mr-1.5"
+                :class="isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"
+              ></span>
+              {{ isOnline ? 'ONLINE' : 'OFFLINE' }}
             </span>
             <span
               v-if="node?.isMaintenance"
@@ -208,21 +340,21 @@ onMounted(() => {
             <Database class="w-4 h-4 text-purple-400 mr-1.5" />
             Host Memory
           </span>
-          <span class="text-xs font-mono font-bold text-purple-400">{{ ramPercent }}%</span>
+          <span class="text-xs font-mono font-bold text-purple-400">{{ hostMemoryPercent }}%</span>
         </div>
         <div>
           <div class="flex items-baseline justify-between my-1 font-mono">
-            <span class="text-lg font-bold text-white">{{ ((node?.memoryAllocated || 0) / 1024).toFixed(1) }} GB</span>
-            <span class="text-xs text-slate-500">/ {{ ((node?.memoryLimit || 65536) / 1024).toFixed(0) }} GB total</span>
+            <span class="text-lg font-bold text-white">{{ hostMemoryUsedGb }} GB</span>
+            <span class="text-xs text-slate-500">/ {{ hostMemoryTotalGb }} GB total</span>
           </div>
           <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-2">
             <div
               class="h-full rounded-full transition-all duration-500 bg-purple-500"
-              :style="{ width: `${ramPercent}%` }"
+              :style="{ width: `${hostMemoryPercent}%` }"
             ></div>
           </div>
           <span class="text-[10px] text-slate-500 font-mono mt-1.5 block">
-            {{ (((node?.memoryLimit || 65536) - (node?.memoryAllocated || 0)) / 1024).toFixed(1) }} GB unallocated
+            {{ hostMemoryFreeGb }} GB free &bull; {{ allocatedMemoryGb }} GB allocated
           </span>
         </div>
       </div>
@@ -232,65 +364,61 @@ onMounted(() => {
         <div class="flex items-center justify-between text-slate-400 mb-2">
           <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300">
             <HardDrive class="w-4 h-4 text-emerald-400 mr-1.5" />
-            Host NVMe Storage
+            Host Storage
           </span>
-          <span class="text-xs font-mono font-bold text-emerald-400">{{ diskPercent }}%</span>
+          <span class="text-xs font-mono font-bold text-emerald-400">{{ hostDiskPercent }}%</span>
         </div>
         <div>
           <div class="flex items-baseline justify-between my-1 font-mono">
-            <span class="text-lg font-bold text-white">{{ ((node?.diskAllocated || 0) / 1024).toFixed(1) }} GB</span>
-            <span class="text-xs text-slate-500">/ {{ ((node?.diskLimit || 2097152) / 1024).toFixed(0) }} GB pool</span>
+            <span class="text-lg font-bold text-white">{{ hostDiskUsedGb }} GB</span>
+            <span class="text-xs text-slate-500">/ {{ hostDiskTotalGb }} GB pool</span>
           </div>
           <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-2">
             <div
               class="h-full rounded-full transition-all duration-500 bg-emerald-500"
-              :style="{ width: `${diskPercent}%` }"
+              :style="{ width: `${hostDiskPercent}%` }"
             ></div>
           </div>
-          <span class="text-[10px] text-slate-500 font-mono mt-1.5 block">
-            ZFS NVMe RAID-10 Volume
+          <span class="text-[10px] text-slate-500 font-mono mt-1.5 block truncate" :title="hostDiskDescription">
+            {{ hostDiskDescription }}
           </span>
         </div>
       </div>
 
-      <!-- CPU Core Load Averages -->
+      <!-- CPU Core Load -->
       <div class="bg-[#111622] border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col justify-between">
         <div class="flex items-center justify-between text-slate-400 mb-2">
           <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300">
             <Cpu class="w-4 h-4 text-blue-400 mr-1.5" />
-            Host Load Average
+            Host CPU
           </span>
-          <span class="text-xs font-mono font-bold text-blue-400">16 Cores</span>
+          <span class="text-xs font-mono font-bold text-blue-400">{{ hostCpuCores }}</span>
         </div>
         <div class="font-mono">
-          <div class="grid grid-cols-3 gap-1.5 text-center my-1">
-            <div class="bg-[#0b0f17] p-1.5 rounded border border-slate-800">
-              <span class="text-[9px] text-slate-500 block">1m</span>
-              <span class="text-xs font-bold text-slate-200">{{ node?.loadAvg?.[0] || '0.42' }}</span>
-            </div>
-            <div class="bg-[#0b0f17] p-1.5 rounded border border-slate-800">
-              <span class="text-[9px] text-slate-500 block">5m</span>
-              <span class="text-xs font-bold text-slate-200">{{ node?.loadAvg?.[1] || '0.58' }}</span>
-            </div>
-            <div class="bg-[#0b0f17] p-1.5 rounded border border-slate-800">
-              <span class="text-[9px] text-slate-500 block">15m</span>
-              <span class="text-xs font-bold text-slate-200">{{ node?.loadAvg?.[2] || '0.65' }}</span>
-            </div>
+          <div class="bg-[#0b0f17] p-2 rounded border border-slate-800 my-1 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Host Usage:</span>
+            <span class="text-sm font-bold text-blue-400">{{ hostCpuUsagePct || '0.0%' }}</span>
           </div>
-          <span class="text-[10px] text-slate-500 block mt-1">AMD EPYC™ 9354 32-Thread</span>
+          <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-1.5">
+            <div
+              class="h-full rounded-full transition-all duration-500 bg-blue-500"
+              :style="{ width: `${Math.min(100, Math.max(0, parseFloat(hostCpuUsagePct || '0')))}%` }"
+            ></div>
+          </div>
+          <span class="text-[10px] text-slate-500 block mt-1 truncate" :title="hostName">{{ hostName }}</span>
         </div>
       </div>
 
-      <!-- Kernel, Docker & OS Details -->
+      <!-- Kernel, Daemon & OS Details -->
       <div class="bg-[#111622] border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col justify-between font-mono text-xs">
         <span class="text-xs font-semibold uppercase tracking-wider flex items-center text-slate-300 font-sans mb-1">
           <Activity class="w-4 h-4 text-amber-400 mr-1.5" />
           Runtime Environment
         </span>
         <div class="space-y-1 text-[11px]">
-          <div class="truncate text-slate-300"><span class="text-slate-500">OS:</span> {{ node?.hostOs || 'Ubuntu 24.04 LTS' }}</div>
-          <div class="truncate text-slate-300"><span class="text-slate-500">Kernel:</span> {{ node?.kernelVersion || '6.8.0-generic' }}</div>
-          <div class="truncate text-slate-300"><span class="text-slate-500">Engine:</span> {{ node?.dockerVersion || 'Docker v26.1.4' }}</div>
+          <div class="truncate text-slate-300" :title="hostOs"><span class="text-slate-500">OS:</span> {{ hostOs }}</div>
+          <div class="truncate text-slate-300" :title="hostKernel"><span class="text-slate-500">Kernel:</span> {{ hostKernel }}</div>
+          <div class="truncate text-slate-300" :title="daemonVersion"><span class="text-slate-500">Daemon:</span> {{ daemonVersion }}</div>
           <div class="text-emerald-400 flex items-center">
             <span class="text-slate-500 mr-1">Cgroups:</span> v2 Enabled
           </div>
@@ -448,7 +576,7 @@ onMounted(() => {
         </p>
 
         <div class="bg-[#0b0f17] border border-slate-800 rounded-lg p-3 relative group font-mono text-xs text-amber-300 select-all break-all pr-12">
-          curl -sSL https://get.octopuspanel.com/tentacle/install.sh | sudo bash -s -- --token {{ node?.token }} --panel-url http://localhost:5173
+          {{ setupCommand }}
           <button
             @click="copySetupCommand"
             class="absolute top-2.5 right-2.5 p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors"
@@ -464,11 +592,14 @@ onMounted(() => {
       <div class="flex items-center justify-between bg-[#0b0f17] p-2.5 rounded-lg border border-slate-800 font-mono text-xs">
         <div>
           <span class="text-[10px] text-slate-500 uppercase font-sans block">Node Secret Authentication Token</span>
-          <span class="text-slate-200 select-all">{{ node?.token }}</span>
+          <span v-if="node?.token" class="text-slate-200 select-all">{{ node.token }}</span>
+          <span v-else class="text-slate-500 italic select-none">Configured &amp; Hashed securely (Click 'Regenerate Node Token' above to rotate)</span>
         </div>
         <button
+          v-if="node?.token"
           @click="copyToken"
           class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+          title="Copy Token"
         >
           <Check v-if="copiedToken" class="w-3.5 h-3.5 text-emerald-400" />
           <Copy v-else class="w-3.5 h-3.5" />
