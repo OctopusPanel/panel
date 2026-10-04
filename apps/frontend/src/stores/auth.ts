@@ -5,6 +5,10 @@ import { ApiService } from '../services/api.js';
 import { setLanguage } from '../i18n/index.js';
 
 export const useAuthStore = defineStore('auth', () => {
+  if (!ApiService.isDemoMode() && localStorage.getItem('octopus_token') === 'demo_jwt_token_sample') {
+    localStorage.removeItem('octopus_token');
+  }
+
   const initialToken = localStorage.getItem('octopus_token') || (ApiService.isDemoMode() ? 'demo_jwt_token_sample' : null);
   if (ApiService.isDemoMode() && !localStorage.getItem('octopus_token')) {
     localStorage.setItem('octopus_token', 'demo_jwt_token_sample');

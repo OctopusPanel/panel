@@ -31,7 +31,7 @@ export class ApiService {
 
   public static isDemoMode(): boolean {
     const val = localStorage.getItem('octopus_demo_mode');
-    return val !== 'false';
+    return val === 'true';
   }
 
   public static setDemoMode(enabled: boolean): void {

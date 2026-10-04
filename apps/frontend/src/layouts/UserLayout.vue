@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import { useServerStore } from '../stores/server.js';
 import { useI18n } from 'vue-i18n';
+import { ApiService } from '../services/api.js';
 import LanguageSwitcher from '../components/ui/LanguageSwitcher.vue';
 import ModuleSlot from '../components/modules/ModuleSlot.vue';
 import {
@@ -28,6 +29,7 @@ const serverStore = useServerStore();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+const isDemoMode = ApiService.isDemoMode();
 
 const isServerSelected = computed(() => Boolean(route.params.id));
 const currentServerId = computed(() => String(route.params.id || ''));
@@ -196,7 +198,7 @@ function handleLogout() {
       <header class="h-14 bg-[#111622]/60 backdrop-blur-sm border-b border-slate-800/80 px-6 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <h2 class="text-sm font-semibold text-slate-200">{{ t('nav.clientArea') }}</h2>
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span v-if="isDemoMode" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
             Demo Mode Active
           </span>
