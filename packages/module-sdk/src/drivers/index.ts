@@ -128,8 +128,10 @@ export class TentacleProviderDriver implements ServerProviderDriver {
       }
     }
     if (ports.length > 0) {
-      finalEnv['SERVER_PORT'] = finalEnv['SERVER_PORT'] || String(ports[0].hostPort);
-      finalEnv['SERVER_IP'] = finalEnv['SERVER_IP'] || '0.0.0.0';
+      const primaryPort = String(ports[0].hostPort);
+      finalEnv['SERVER_PORT'] = primaryPort;
+      finalEnv['PORT'] = primaryPort;
+      finalEnv['SERVER_IP'] = '0.0.0.0';
     }
     finalEnv['SERVER_MEMORY'] = finalEnv['SERVER_MEMORY'] || String(server.memory);
 
@@ -141,20 +143,25 @@ export class TentacleProviderDriver implements ServerProviderDriver {
       dockerImage = 'ghcr.io/ptero-eggs/yolks:java_21';
     }
 
-    let startupCommand = server.startupCommand || bp?.startup || '';
-    for (const [k, v] of Object.entries(finalEnv)) {
-      startupCommand = startupCommand.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), v);
-    }
-    if (ports.length > 0) {
-      startupCommand = startupCommand.replace(/\{\{server\.build\.default\.port\}\}/g, String(ports[0].hostPort));
-    }
-
-    finalEnv['STARTUP'] = finalEnv['STARTUP'] || startupCommand;
-
     const isMinecraft = bp?.features?.includes('eula') || bp?.name?.toLowerCase()?.includes('paper') || bp?.name?.toLowerCase()?.includes('minecraft') || dockerImage?.includes('java');
     if (isMinecraft) {
       finalEnv['EULA'] = 'true';
     }
+
+    let startupCommand = server.startupCommand || bp?.startup || '';
+    if (ports.length > 0) {
+      startupCommand = startupCommand
+        .replace(/\{\{server\.build\.default\.port\}\}/g, String(ports[0].hostPort))
+        .replace(/\{\{SERVER_PORT\}\}/g, String(ports[0].hostPort));
+    }
+    for (const [k, v] of Object.entries(finalEnv)) {
+      startupCommand = startupCommand.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), v);
+    }
+    if (isMinecraft && startupCommand.includes('-jar') && !startupCommand.includes('--port') && ports.length > 0) {
+      startupCommand = `${startupCommand} --port ${ports[0].hostPort}`;
+    }
+
+    finalEnv['STARTUP'] = finalEnv['STARTUP'] || startupCommand;
 
     await client.createServer({
       uuid: server.uuid,
@@ -187,6 +194,21 @@ export class TentacleProviderDriver implements ServerProviderDriver {
     if (isMinecraft) {
       try {
         await client.writeFile(server.uuid, 'eula.txt', 'eula=true\n');
+        // Synchronize server.properties port with primary allocation
+        try {
+          const content = await client.readFile(server.uuid, 'server.properties');
+          const primaryPort = (server as any).allocation?.port;
+          if (primaryPort && typeof content === 'string') {
+            const updated = content
+              .replace(/^server-port=.*/m, `server-port=${primaryPort}`)
+              .replace(/^query\.port=.*/m, `query.port=${primaryPort}`);
+            if (updated !== content) {
+              await client.writeFile(server.uuid, 'server.properties', updated);
+            }
+          }
+        } catch {
+          // File might not exist yet before first run
+        }
       } catch {
         // Ignored
       }
