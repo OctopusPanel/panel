@@ -14,17 +14,19 @@ import { PowerAction, ServerMetrics } from '@octopus/shared';
 
 export class TentacleHttpClient {
   private readonly baseUrl: string;
+  private readonly fallbackBaseUrl?: string;
   private readonly token: string;
   private readonly timeoutMs: number;
 
   constructor(config: TentacleClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, '');
+    this.fallbackBaseUrl = config.fallbackBaseUrl?.replace(/\/+$/, '');
     this.token = config.token;
     this.timeoutMs = config.timeoutMs || 15000;
   }
 
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  private async executeFetch<T>(base: string, path: string, options: RequestInit = {}): Promise<T> {
+    const url = `${base}${path.startsWith('/') ? path : `/${path}`}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -53,6 +55,18 @@ export class TentacleHttpClient {
       return (await res.text()) as unknown as T;
     } finally {
       clearTimeout(timeout);
+    }
+  }
+
+  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    try {
+      return await this.executeFetch<T>(this.baseUrl, path, options);
+    } catch (err: any) {
+      // If primary base URL failed with network error and fallback is available, try fallback
+      if (this.fallbackBaseUrl && this.fallbackBaseUrl !== this.baseUrl && !err.message?.includes('Tentacle HTTP')) {
+        return await this.executeFetch<T>(this.fallbackBaseUrl, path, options);
+      }
+      throw err;
     }
   }
 

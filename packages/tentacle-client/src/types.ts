@@ -2,6 +2,7 @@ import { ServerStatus, PowerAction, ServerMetrics } from '@octopus/shared';
 
 export interface TentacleClientConfig {
   baseUrl: string;
+  fallbackBaseUrl?: string;
   token: string;
   timeoutMs?: number;
 }
