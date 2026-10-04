@@ -16,10 +16,10 @@ async function getServerAndVerify(c: Context<AppEnv>) {
   if (!param) {
     throw new Error(ApiErrorCode.SERVER_NOT_FOUND);
   }
-  const idNum = parseInt(param, 10);
+  const isNumeric = /^\d+$/.test(param);
 
   const server = await db.query.servers.findFirst({
-    where: isNaN(idNum) ? eq(servers.uuid, param) : eq(servers.id, idNum),
+    where: isNumeric ? eq(servers.id, parseInt(param, 10)) : eq(servers.uuid, param),
   });
 
   if (!server) {

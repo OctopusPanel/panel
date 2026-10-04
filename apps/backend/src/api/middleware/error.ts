@@ -13,7 +13,7 @@ export function jsonError(
     success: false,
     error: {
       code,
-      message,
+      message: message || (typeof code === 'string' ? code : 'An error occurred'),
       params,
     },
   };

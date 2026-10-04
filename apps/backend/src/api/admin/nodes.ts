@@ -52,7 +52,7 @@ adminNodesRouter.post('/', async (c) => {
   }
 
   const rawToken = crypto.randomBytes(32).toString('hex');
-  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const tokenHash = rawToken;
 
   const [created] = await db
     .insert(nodes)
@@ -114,6 +114,7 @@ adminNodesRouter.get('/:id', async (c) => {
     success: true,
     data: {
       ...node,
+      token: node.tokenHash,
       health,
     },
   });
@@ -130,10 +131,11 @@ adminNodesRouter.get('/:id/setup-command', async (c) => {
     return jsonError(c, ApiErrorCode.NODE_NOT_FOUND, 404, { id });
   }
 
-  const rawToken = crypto.randomBytes(32).toString('hex');
-  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-
-  await db.update(nodes).set({ tokenHash }).where(eq(nodes.id, id));
+  let rawToken = node.tokenHash;
+  if (!rawToken) {
+    rawToken = crypto.randomBytes(32).toString('hex');
+    await db.update(nodes).set({ tokenHash: rawToken }).where(eq(nodes.id, id));
+  }
 
   const setupCommand = `curl -sSL ${config.panelUrl}/install-tentacle.sh | bash -s -- --panel-url ${config.panelUrl} --token ${rawToken} --port ${node.apiPort} --sftp-port ${node.sftpPort} --install-docker`;
 
@@ -158,9 +160,7 @@ adminNodesRouter.post('/:id/regenerate-token', async (c) => {
   }
 
   const rawToken = crypto.randomBytes(32).toString('hex');
-  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-
-  await db.update(nodes).set({ tokenHash }).where(eq(nodes.id, id));
+  await db.update(nodes).set({ tokenHash: rawToken }).where(eq(nodes.id, id));
 
   const setupCommand = `curl -sSL ${config.panelUrl}/install-tentacle.sh | bash -s -- --panel-url ${config.panelUrl} --token ${rawToken} --port ${node.apiPort} --sftp-port ${node.sftpPort} --install-docker`;
 
@@ -168,6 +168,34 @@ adminNodesRouter.post('/:id/regenerate-token', async (c) => {
     success: true,
     data: {
       command: setupCommand,
+      token: rawToken,
+    },
+  });
+});
+
+// POST /api/v1/admin/nodes/:id/set-token
+adminNodesRouter.post('/:id/set-token', async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  const node = await db.query.nodes.findFirst({
+    where: eq(nodes.id, id),
+  });
+
+  if (!node) {
+    return jsonError(c, ApiErrorCode.NODE_NOT_FOUND, 404, { id });
+  }
+
+  const body = await c.req.json().catch(() => ({}));
+  if (!body.token || typeof body.token !== 'string') {
+    return jsonError(c, ApiErrorCode.VALIDATION_ERROR, 422, {}, 'Token is required');
+  }
+
+  const rawToken = body.token.trim();
+  await db.update(nodes).set({ tokenHash: rawToken }).where(eq(nodes.id, id));
+
+  return c.json({
+    success: true,
+    data: {
+      message: 'Node token updated successfully',
       token: rawToken,
     },
   });
@@ -211,12 +239,17 @@ adminNodesRouter.put('/:id', async (c) => {
     return handleZodError(c, parseResult.error);
   }
 
+  const updateData: any = {
+    ...parseResult.data,
+    updatedAt: new Date(),
+  };
+  if (body.token && typeof body.token === 'string' && body.token.trim().length > 0) {
+    updateData.tokenHash = body.token.trim();
+  }
+
   const [updated] = await db
     .update(nodes)
-    .set({
-      ...parseResult.data,
-      updatedAt: new Date(),
-    })
+    .set(updateData)
     .where(eq(nodes.id, id))
     .returning();
 

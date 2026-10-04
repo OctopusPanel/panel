@@ -3,6 +3,8 @@ import {
   TentacleSystemStatus,
   TentacleSystemMetrics,
   TentacleServerCreateOptions,
+  TentacleServerCreatePayload,
+  TentaclePortAllocation,
   TentacleServerInfo,
   TentacleFileEntry,
   TentacleUpdatePayload,
@@ -12,17 +14,19 @@ import { PowerAction, ServerMetrics } from '@octopus/shared';
 
 export class TentacleHttpClient {
   private readonly baseUrl: string;
+  private readonly fallbackBaseUrl?: string;
   private readonly token: string;
   private readonly timeoutMs: number;
 
   constructor(config: TentacleClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, '');
+    this.fallbackBaseUrl = config.fallbackBaseUrl?.replace(/\/+$/, '');
     this.token = config.token;
     this.timeoutMs = config.timeoutMs || 15000;
   }
 
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  private async executeFetch<T>(base: string, path: string, options: RequestInit = {}): Promise<T> {
+    const url = `${base}${path.startsWith('/') ? path : `/${path}`}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -54,6 +58,18 @@ export class TentacleHttpClient {
     }
   }
 
+  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    try {
+      return await this.executeFetch<T>(this.baseUrl, path, options);
+    } catch (err: any) {
+      // If primary base URL failed with network error and fallback is available, try fallback
+      if (this.fallbackBaseUrl && this.fallbackBaseUrl !== this.baseUrl && !err.message?.includes('Tentacle HTTP')) {
+        return await this.executeFetch<T>(this.fallbackBaseUrl, path, options);
+      }
+      throw err;
+    }
+  }
+
   // System & Health
   async getHealth(): Promise<{ status: string; service: string; version: string }> {
     return this.request('/health');
@@ -73,9 +89,39 @@ export class TentacleHttpClient {
   }
 
   async createServer(options: TentacleServerCreateOptions): Promise<void> {
+    const memoryBytes = options.memoryLimitMb ? options.memoryLimitMb * 1024 * 1024 : undefined;
+    const swapBytes = options.swapLimitMb !== undefined && options.swapLimitMb >= 0 ? options.swapLimitMb * 1024 * 1024 : undefined;
+    const diskBytes = options.diskLimitMb ? options.diskLimitMb * 1024 * 1024 : undefined;
+    const cpuQuota = options.cpuLimitPercent ? options.cpuLimitPercent * 1000 : undefined;
+    const cpuPeriod = options.cpuLimitPercent ? 100000 : undefined;
+
+    const allocations: TentaclePortAllocation[] = (options.ports || []).map((p) => ({
+      host_ip: p.hostIp || '0.0.0.0',
+      host_port: p.hostPort,
+      container_port: p.containerPort,
+      protocol: (p.protocol || 'tcp').toLowerCase(),
+    }));
+
+    const payload: TentacleServerCreatePayload = {
+      id: options.uuid,
+      name: options.name || `Server ${options.uuid.slice(0, 8)}`,
+      docker_image: options.image,
+      startup_command: options.startupCommand,
+      stop_command: options.stopCommand || undefined,
+      stop_timeout_secs: options.stopTimeoutSecs || 30,
+      environment: options.environment || {},
+      allocations,
+      memory_limit_bytes: memoryBytes,
+      swap_limit_bytes: swapBytes,
+      cpu_quota: cpuQuota,
+      cpu_period: cpuPeriod,
+      disk_quota_bytes: diskBytes,
+      install_config: options.installConfig,
+    };
+
     await this.request('/api/servers', {
       method: 'POST',
-      body: JSON.stringify(options),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -98,11 +144,11 @@ export class TentacleHttpClient {
 
   async installServer(
     uuid: string,
-    options: { script: string; container: string; entrypoint?: string },
+    options?: { script: string; container: string; entrypoint?: string },
   ): Promise<void> {
     await this.request(`/api/servers/${uuid}/install`, {
       method: 'POST',
-      body: JSON.stringify(options),
+      body: options ? JSON.stringify(options) : undefined,
     });
   }
 
